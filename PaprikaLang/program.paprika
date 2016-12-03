@@ -1,0 +1,16 @@
+﻿func test(one, two)
+{
+	if one != 5
+	{
+		one + two * 3
+	}
+	else
+	{
+		two
+	}
+}
+
+func Main()
+{
+	test(2, 4)
+}

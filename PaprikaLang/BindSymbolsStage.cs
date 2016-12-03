@@ -55,6 +55,17 @@ namespace PaprikaLang
 			funcDef.Symbol = funcSym;
 		}
 
+		private void Bind(ASTIfStatement ifStatement)
+		{
+			Bind(ifStatement.ConditionExpr as dynamic);
+
+			SymbolTable ifScope = new SymbolTable(symTab);
+			BindScope(ifStatement.IfBody, ifScope);
+
+			SymbolTable elseScope = new SymbolTable(symTab);
+			BindScope(ifStatement.ElseBody, elseScope);
+		}
+
 		// nothing to do here
 		private void Bind(ASTNumeric numeric) { }
 		private void Bind(ASTString str) { }

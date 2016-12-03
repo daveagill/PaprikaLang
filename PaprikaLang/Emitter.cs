@@ -178,16 +178,7 @@ namespace PaprikaLang
 		{
 			// overwrite ilGen with the appropriate one for this method
 			ilGen = loweredSymbols.GetMethodILGenerator(funcDef.Symbol);
-
-			// emit all body nodes except the last one
-			for (int i = 0; i < funcDef.Body.Count - 1; ++i)
-			{
-				Gen(funcDef.Body[i] as dynamic, ilGen);
-				ilGen.Emit(OpCodes.Pop);
-			}
-
-			// emit the last body node to use as the return value
-			Gen(funcDef.Body.Last() as dynamic, ilGen);
+			GenBlock(funcDef.Body, ilGen);
 			ilGen.Emit(OpCodes.Ret);
 		}
 
@@ -233,6 +224,19 @@ namespace PaprikaLang
 				case BinaryOps.Divide:
 					ilGen.Emit(OpCodes.Div);
 					return;
+				case BinaryOps.Equals:
+					ilGen.Emit(OpCodes.Ceq);
+					return;
+				case BinaryOps.NotEquals:
+					ilGen.Emit(OpCodes.Ceq);
+					ilGen.Emit(OpCodes.Not);
+					return;
+				case BinaryOps.GreaterThan:
+					ilGen.Emit(OpCodes.Cgt);
+					return;
+				case BinaryOps.LessThan:
+					ilGen.Emit(OpCodes.Clt);
+					return;
 			}
 		}
 
@@ -245,6 +249,43 @@ namespace PaprikaLang
 
 			MethodInfo method = loweredSymbols.GetMethod(funcCall.ReferencedSymbol);
 			ilGen.Emit(OpCodes.Call, method);
+		}
+
+		private void Gen(ASTIfStatement ifStatement, ILGenerator ilGen)
+		{
+			Gen(ifStatement.ConditionExpr as dynamic, ilGen);
+
+			if (ifStatement.ElseBody == null) // if without else
+			{
+				Label doneLabel = ilGen.DefineLabel();
+				ilGen.Emit(OpCodes.Brfalse, doneLabel);
+				GenBlock(ifStatement.IfBody, ilGen);
+				ilGen.MarkLabel(doneLabel);
+			}
+			else // an if-else statement
+			{
+				Label doneLabel = ilGen.DefineLabel();
+				Label elseLabel = ilGen.DefineLabel();
+				ilGen.Emit(OpCodes.Brfalse, elseLabel);
+				GenBlock(ifStatement.IfBody, ilGen);
+				ilGen.Emit(OpCodes.Br, doneLabel);
+				ilGen.MarkLabel(elseLabel);
+				GenBlock(ifStatement.ElseBody, ilGen);
+				ilGen.MarkLabel(doneLabel);
+			}
+		}
+
+		private void GenBlock(IList<ASTNode> block, ILGenerator ilGen)
+		{
+			// emit n-1 body nodes but discard them from the stack
+			for (int i = 0; i < block.Count - 1; ++i)
+			{
+				Gen(block[i] as dynamic, ilGen);
+				ilGen.Emit(OpCodes.Pop);
+			}
+
+			// emit the last body node to keep on the stack
+			Gen(block.Last() as dynamic, ilGen);
 		}
 	}
 }

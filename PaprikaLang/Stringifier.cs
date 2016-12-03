@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+
 namespace PaprikaLang
 {
 	public class ASTStringifier
@@ -40,10 +42,34 @@ namespace PaprikaLang
 			return "call " + funcCall.Name + "(" + funcCall.Args.Count + ")";
 		}
 
+		private string Stringify(ASTIfStatement ifStatement)
+		{
+			string s = "if " + Stringify(ifStatement.ConditionExpr as dynamic) +
+				" " + StringifyBlock(ifStatement.IfBody);
+			
+			if (ifStatement.ElseBody != null)
+			{
+				s += " else " + StringifyBlock(ifStatement.ElseBody);
+			}
+
+			return s;
+		}
+
 		private string Stringify(ASTFunctionDef funcDef)
 		{
-			string s = "func " + funcDef.Name + "(" + funcDef.Args.Count + ") {\n";
-			foreach (ASTNode node in funcDef.Body)
+			string s = "func " + funcDef.Name + "(" + funcDef.Args.Count + ") ";
+			return s + StringifyBlock(funcDef.Body);
+		}
+
+		private string Stringify(ASTNode untyped)
+		{
+			throw new Exception("Unhandled ASTNode: " + untyped.GetType());
+		}
+
+		private string StringifyBlock(IList<ASTNode> block)
+		{
+			string s = "{\n";
+			foreach (ASTNode node in block)
 			{
 				s += Stringify(node as dynamic) + '\n';
 			}

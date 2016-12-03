@@ -99,4 +99,18 @@ namespace PaprikaLang
 			this.Args = args;
 		}
 	}
+
+	public class ASTIfStatement : ASTNode
+	{
+		public ASTNode ConditionExpr;
+		public IList<ASTNode> IfBody { get; }
+		public IList<ASTNode> ElseBody { get; }
+
+		public ASTIfStatement(ASTNode conditionExpr, IList<ASTNode> ifBody, IList<ASTNode> elseBody)
+		{
+			this.ConditionExpr = conditionExpr;
+			this.IfBody = ifBody;
+			this.ElseBody = elseBody;
+		}
+	}
 }

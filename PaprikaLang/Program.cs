@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.IO;
 
 namespace PaprikaLang
 {
@@ -8,46 +9,23 @@ namespace PaprikaLang
 	{
 		public static void Main(string[] args)
 		{
-			//Compile("helloworld");
+			string sourceFilePath = "program.paprika";
+			if (args.Length > 0)
+			{
+				sourceFilePath = args[0];
+			}
 
-			ASTModule module = Parser.Parse(
-				"func test(one, two) {\n" +
-					"one + two * 3" +
-				"}" +
-				"func Main() { test(2, 4) / 2.4 }").RootNode;
+			string programName = Path.GetFileNameWithoutExtension(sourceFilePath);
 
+			string sourceCode = File.ReadAllText(sourceFilePath);
+			ASTModule module = Parser.Parse(sourceCode).RootNode;
 
 			SemanticAnalyser.Analyse(module);
-			Emitter.Emit("MyAwesomeAssembly", "MyAwesomeAssembly.exe", module);
+			Emitter.Emit(programName, programName + ".exe", module);
 
 			string asString = new ASTStringifier().Stringify(module);
 			Console.WriteLine(asString);
 			Console.WriteLine("\n\nDone!");
 		}
-
-
-		public static void Compile(string assemblyName)
-		{
-			string filename = assemblyName + ".exe";
-
-			AssemblyBuilder asm = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(assemblyName),
-														AssemblyBuilderAccess.Save);
-
-			ModuleBuilder mod = asm.DefineDynamicModule(assemblyName, filename);
-
-			var mainClassTypeName = assemblyName + ".Program";
-			var type = mod.DefineType(mainClassTypeName, TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract | TypeAttributes.Public);
-
-			var mainMethod = type.DefineMethod("Execute", MethodAttributes.Public | MethodAttributes.Static);
-			var ilGen = mainMethod.GetILGenerator();
-			ilGen.EmitWriteLine("Hello There!");
-			ilGen.Emit(OpCodes.Ret);
-
-			type.CreateType();
-			asm.SetEntryPoint(mainMethod);
-			asm.Save(filename);
-		}
-
-
 	}
 }

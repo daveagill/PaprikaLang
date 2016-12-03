@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+
 namespace PaprikaLang
 {
 	public class TypeCheckStage
@@ -50,11 +52,7 @@ namespace PaprikaLang
 
 		private TypeDetail TypeCheck(ASTFunctionDef funcDef)
 		{
-			TypeDetail blockReturnType = null;
-			foreach (var node in funcDef.Body)
-			{
-				blockReturnType = TypeCheck(node as dynamic);
-			}
+			TypeDetail blockReturnType = TypeCheckBlock(funcDef.Body);
 
 			if (blockReturnType == null)
 			{
@@ -67,6 +65,33 @@ namespace PaprikaLang
 			}
 
 			return new TypeDetail(TypePrimitive.Func); // TODO do function types properly
+		}
+
+		private TypeDetail TypeCheck(ASTIfStatement ifStatement)
+		{
+			TypeDetail ifBlockType = TypeCheckBlock(ifStatement.IfBody);
+
+			if (ifStatement.ElseBody != null)
+			{
+				TypeDetail elseBlockType = TypeCheckBlock(ifStatement.ElseBody);
+
+				if (ifBlockType != elseBlockType)
+				{
+					throw new Exception("If block type of " + ifBlockType + " and Else block type of " + elseBlockType + " do not match");
+				}
+			}
+
+			return ifBlockType;
+		}
+
+		private TypeDetail TypeCheckBlock(IList<ASTNode> block)
+		{
+			TypeDetail blockReturnType = null;
+			foreach (var node in block)
+			{
+				blockReturnType = TypeCheck(node as dynamic);
+			}
+			return blockReturnType;
 		}
 	}
 }

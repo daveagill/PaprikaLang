@@ -7,7 +7,12 @@ namespace PaprikaLang
 		Subtract,
 		Multiply,
 		Divide,
-		StringConcat
+		StringConcat,
+
+		GreaterThan,
+		LessThan,
+		Equals,
+		NotEquals
 	}
 
 	public enum UnaryOps
@@ -23,16 +28,24 @@ namespace PaprikaLang
 		{
 			switch (op)
 			{
+				case BinaryOps.Equals:
+				case BinaryOps.NotEquals:
+					return 1;
+
+				case BinaryOps.GreaterThan:
+				case BinaryOps.LessThan:
+					return 2;
+					
 				case BinaryOps.Add:
 				case BinaryOps.Subtract:
-					return 1;
+					return 3;
 
 				case BinaryOps.Multiply:
 				case BinaryOps.Divide:
-					return 2;
+					return 4;
 
 				case BinaryOps.StringConcat:
-					return 3;
+					return 5;
 			}
 
 			return -1;
@@ -49,6 +62,8 @@ namespace PaprikaLang
 				case '-': return BinaryOps.Subtract;
 				case '*': return BinaryOps.Multiply;
 				case '/': return BinaryOps.Divide;
+				case '>': return BinaryOps.GreaterThan;
+				case '<': return BinaryOps.LessThan;
 			}
 
 			return null;
@@ -59,6 +74,8 @@ namespace PaprikaLang
 			switch (string.Concat(token1, token2))
 			{
 				case "..": return BinaryOps.StringConcat;
+				case "==": return BinaryOps.Equals;
+				case "!=": return BinaryOps.NotEquals;
 			}
 
 			return null;

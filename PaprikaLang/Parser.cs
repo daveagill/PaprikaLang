@@ -123,6 +123,10 @@ namespace PaprikaLang
 				{
 					node = ParseFunctionDef();
 				}
+				else if (lexer.IncomingToken == TokenType.If)
+				{
+					node = ParseIf();
+				}
 				else
 				{
 					node = TryParseExpression();
@@ -194,6 +198,21 @@ namespace PaprikaLang
 			}
 
 			return new ASTFunctionCall(name, args);
+		}
+
+		private ASTIfStatement ParseIf()
+		{
+			lexer.Expect(TokenType.If);
+			ASTNode conditionExpr = TryParseExpression();
+			IList<ASTNode> ifBody = ParseBlock();
+
+			IList<ASTNode> elseBody = null;
+			if (lexer.Accept(TokenType.Else))
+			{
+				elseBody = ParseBlock();
+			}
+
+			return new ASTIfStatement(conditionExpr, ifBody, elseBody);
 		}
 
 		public static ParseResult Parse(string input)

@@ -20,12 +20,6 @@ namespace PaprikaLang
 		public TypePrimitive TypePrimitive { get; }
 		public DataTypeSymbol UserDefinedSymbol { get; }
 
-		public TypeDetail(string name)
-		{
-			Name = name;
-			TypePrimitive = TypePrimitive.UserDefined;
-		}
-
 		public TypeDetail(TypePrimitive typePrimitive)
 		{
 			Name = null;
@@ -35,6 +29,7 @@ namespace PaprikaLang
 		public TypeDetail(DataTypeSymbol userDefinedTypeSymbol)
 		{
 			Name = userDefinedTypeSymbol.Name;
+			TypePrimitive = TypePrimitive.UserDefined;
 			UserDefinedSymbol = userDefinedTypeSymbol;
 		}
 
@@ -51,7 +46,7 @@ namespace PaprikaLang
 
 		public override string ToString()
 		{
-			return string.Format("[TypeInfo: Name={0}, TypePrimitive={1}, UserDefinedSymbol={2}]", Name, TypePrimitive, UserDefinedSymbol);
+			return string.Format("[TypeDetail: Name={0}, TypePrimitive={1}, UserDefinedSymbol={2}]", Name, TypePrimitive, UserDefinedSymbol);
 		}
 	}
 

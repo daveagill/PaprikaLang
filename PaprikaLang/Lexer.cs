@@ -5,13 +5,15 @@ namespace PaprikaLang
 	{
 		EndOfTokens,
 
-		// litrals
+		// literals
 		Identifier,
 		NumericLiteral,
 		StringLiteral,
 
 		// keywords
 		Function,
+		If,
+		Else,
 
 		// special punctuation & operators
 		SpecialChar
@@ -170,6 +172,14 @@ namespace PaprikaLang
 			{
 				case "func":
 					type = TokenType.Function;
+					break;
+
+				case "if":
+					type = TokenType.If;
+					break;
+
+				case "else":
+					type = TokenType.Else;
 					break;
 			}
 
