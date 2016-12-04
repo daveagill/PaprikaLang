@@ -148,6 +148,8 @@ namespace PaprikaLang
 			cursor.AdvanceWhile(c => c != '"');
 
 			EmitToken(TokenType.StringLiteral, cursor.GetString(startIdx));
+			cursor.Advance(); // eat the closing quote
+
 			return true;
 		}
 

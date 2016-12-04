@@ -15,7 +15,7 @@ namespace PaprikaLang
 
 		private TypeDetail TypeCheck(ASTString str)
 		{
-			return new TypeDetail(TypePrimitive.Number);
+			return new TypeDetail(TypePrimitive.String);
 		}
 
 		private TypeDetail TypeCheck(ASTNumeric numeric)

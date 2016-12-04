@@ -119,7 +119,7 @@ namespace PaprikaLang
 			assemblyBuilder.SetEntryPoint(entryMethod);
 			var ilGen = entryMethod.GetILGenerator();
 			ilGen.Emit(OpCodes.Call, mainMethod);
-			ilGen.Emit(OpCodes.Call, typeof(System.Console).GetMethod("WriteLine", new System.Type[] { typeof(double) }));
+			ilGen.Emit(OpCodes.Call, typeof(System.Console).GetMethod("WriteLine", new System.Type[] { mainMethod.ReturnType }));
 			ilGen.Emit(OpCodes.Ret);
 
 			return loweredSymbols;

@@ -16,16 +16,15 @@ namespace PaprikaLang
 			}
 
 			string programName = Path.GetFileNameWithoutExtension(sourceFilePath);
-
 			string sourceCode = File.ReadAllText(sourceFilePath);
-			ASTModule module = Parser.Parse(sourceCode).RootNode;
 
+			ASTModule module = Parser.Parse(sourceCode).RootNode;
 			SemanticAnalyser.Analyse(module);
 			Emitter.Emit(programName, programName + ".exe", module);
 
 			string asString = new ASTStringifier().Stringify(module);
 			Console.WriteLine(asString);
-			Console.WriteLine("\n\nDone!");
+			Console.WriteLine("\n\nCompilation Complete!");
 		}
 	}
 }

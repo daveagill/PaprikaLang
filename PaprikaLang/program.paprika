@@ -1,16 +1,16 @@
-﻿func test(one number, two number) -> number
+﻿func doStuff(x number) -> string
 {
-	if one != 5
+	if x == 5
 	{
-		one + two * 4
+		"x is five!"
 	}
 	else
 	{
-		two
+		"x is not five :("
 	}
 }
 
-func Main() -> number
+func Main() -> string
 {
-	test(2, 4)
+	doStuff(8)
 }

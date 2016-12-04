@@ -33,20 +33,29 @@ namespace PaprikaLang
 			UserDefinedSymbol = userDefinedTypeSymbol;
 		}
 
-		public override bool Equals(object obj)
-		{
-			if (obj == null || GetType() != obj.GetType())
-			{
-				return false;
-			}
-
-			TypeDetail other = (TypeDetail)obj;
-			return Name == other.Name && TypePrimitive == other.TypePrimitive && UserDefinedSymbol == other.UserDefinedSymbol;
-		}
-
 		public override string ToString()
 		{
 			return string.Format("[TypeDetail: Name={0}, TypePrimitive={1}, UserDefinedSymbol={2}]", Name, TypePrimitive, UserDefinedSymbol);
+		}
+
+		public override int GetHashCode()
+		{
+			return Name.GetHashCode();
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is TypeDetail && this == (TypeDetail)obj;
+		}
+
+		public static bool operator ==(TypeDetail lhs, TypeDetail rhs)
+		{
+			return lhs.Name == rhs.Name && lhs.TypePrimitive == rhs.TypePrimitive && lhs.UserDefinedSymbol == rhs.UserDefinedSymbol;
+		}
+
+		public static bool operator !=(TypeDetail lhs, TypeDetail rhs)
+		{
+			return !(lhs == rhs);
 		}
 	}
 
