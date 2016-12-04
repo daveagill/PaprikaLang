@@ -149,7 +149,8 @@ namespace PaprikaLang
 			lexer.Expect(TokenType.Identifier);
 			string functionName = lexer.AcceptedValue;
 
-			IList<string> args = new List<string>();
+			// parse parameters
+			IList<ASTFunctionDef.ASTParam> args = new List<ASTFunctionDef.ASTParam>();
 			lexer.ExpectChar('(');
 			while (!lexer.AcceptChar(')'))
 			{
@@ -159,13 +160,26 @@ namespace PaprikaLang
 					lexer.ExpectChar(',');
 				}
 
+				// expect parameter name
 				lexer.Expect(TokenType.Identifier);
-				args.Add(lexer.AcceptedValue);
+				string paramName = lexer.AcceptedValue;
+
+				// expect parameter type
+				lexer.Expect(TokenType.Identifier);
+				string paramType = lexer.AcceptedValue;
+
+				args.Add(new ASTFunctionDef.ASTParam(paramName, paramType));
 			}
+
+			// parse arrow (->) then return-type
+			lexer.ExpectChar('-');
+			lexer.ExpectChar('>');
+			lexer.Expect(TokenType.Identifier);
+			string returnType = lexer.AcceptedValue;
 
 			IList<ASTNode> functionBody = ParseBlock();
 
-			return new ASTFunctionDef(functionName, args, functionBody);
+			return new ASTFunctionDef(functionName, args, functionBody, returnType);
 		}
 
 		private ASTNode ParseNamedValueOrFunctionCall(string name)

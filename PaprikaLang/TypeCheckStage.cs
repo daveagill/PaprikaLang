@@ -54,14 +54,11 @@ namespace PaprikaLang
 		{
 			TypeDetail blockReturnType = TypeCheckBlock(funcDef.Body);
 
-			if (blockReturnType == null)
+			if (blockReturnType != funcDef.Symbol.ReturnType)
 			{
-				throw new Exception("Unable to determine return type of function definition");
-			}
-
-			if (blockReturnType.TypePrimitive != TypePrimitive.Number)
-			{
-				throw new Exception("Function return types must be numbers (for now)");
+				throw new Exception(
+					"Function '" + funcDef.Name + "' has a defined return type of " +
+					funcDef.Symbol.ReturnType + " but is attempted to return a " + blockReturnType);
 			}
 
 			return new TypeDetail(TypePrimitive.Func); // TODO do function types properly

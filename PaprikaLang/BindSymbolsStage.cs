@@ -44,10 +44,10 @@ namespace PaprikaLang
 			SymbolTable functionScope = new SymbolTable(symTab);
 			FunctionSymbol funcSym = new FunctionSymbol(funcDef.Name, functionScope, returnType);
 			symTab.Add(funcSym);
-			foreach (string arg in funcDef.Args)
+			foreach (ASTFunctionDef.ASTParam param in funcDef.Args)
 			{
-				TypeDetail argType = symTab.ResolveType("number");
-				NamedValueSymbol paramSym = new NamedValueSymbol(arg, argType);
+				TypeDetail paramType = symTab.ResolveType(param.Type);
+				NamedValueSymbol paramSym = new NamedValueSymbol(param.Name, paramType);
 				functionScope.Add(paramSym);
 				funcSym.Params.Add(paramSym);
 			}

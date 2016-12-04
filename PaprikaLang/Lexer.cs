@@ -16,6 +16,7 @@ namespace PaprikaLang
 		Else,
 
 		// special punctuation & operators
+		Arrow,
 		SpecialChar
 	}
 
@@ -99,6 +100,8 @@ namespace PaprikaLang
 			{
 				return TokenType;
 			}
+
+
 
 			// otherwise just extract a single char symbol
 			char symbol = cursor.GetChar();

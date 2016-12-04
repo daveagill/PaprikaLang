@@ -57,8 +57,8 @@ namespace PaprikaLang
 
 		private string Stringify(ASTFunctionDef funcDef)
 		{
-			string s = "func " + funcDef.Name + "(" + funcDef.Args.Count + ") ";
-			return s + StringifyBlock(funcDef.Body);
+			string s = "func " + funcDef.Name + "(" + funcDef.Args.Count + ") -> " + funcDef.ReturnType;
+			return s + " " + StringifyBlock(funcDef.Body);
 		}
 
 		private string Stringify(ASTNode untyped)

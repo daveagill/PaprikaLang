@@ -70,19 +70,31 @@ namespace PaprikaLang
 
 	public class ASTFunctionDef : ASTNode
 	{
+		public class ASTParam
+		{
+			public string Name { get; }
+			public string Type { get; }
+
+			public ASTParam(string name, string type)
+			{
+				this.Name = name;
+				this.Type = type;
+			}
+		}
+
 		public string Name { get; }
-		public IList<string> Args { get; }
+		public IList<ASTParam> Args { get; }
 		public string ReturnType { get; }
 		public IList<ASTNode> Body { get; }
 
 		public FunctionSymbol Symbol { get; set; }
 
-		public ASTFunctionDef(string name, IList<string> args, IList<ASTNode> body)
+		public ASTFunctionDef(string name, IList<ASTParam> args, IList<ASTNode> body, string returnType)
 		{
 			this.Name = name;
 			this.Args = args;
 			this.Body = body;
-			this.ReturnType = "number";
+			this.ReturnType = returnType;
 		}
 	}
 
