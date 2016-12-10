@@ -33,12 +33,76 @@ namespace PaprikaLang
 			TypeDetail LHSType = TypeCheck(binOp.LHS as dynamic);
 			TypeDetail RHSType = TypeCheck(binOp.RHS as dynamic);
 
-			if (!LHSType.Equals(RHSType))
+			// decorate the binOp node with type information
+			binOp.LHSType = LHSType;
+			binOp.RHSType = RHSType;
+
+			switch (binOp.Op)
 			{
-				throw new Exception("LHS type of " + LHSType + " does match RHS type of " + RHSType);
+				case BinaryOps.Add:
+				case BinaryOps.Subtract:
+				case BinaryOps.Multiply:
+				case BinaryOps.Divide:
+				case BinaryOps.Modulus:
+					if (LHSType.TypePrimitive != TypePrimitive.Number)
+					{
+						throw new Exception("Expected LHS type of " + TypePrimitive.Number + " but got " + LHSType + ", for operator " + binOp.Op);
+					}
+					if (RHSType.TypePrimitive != TypePrimitive.Number)
+					{
+						throw new Exception("Expected RHS type of " + TypePrimitive.Number + " but got " + RHSType + ", for operator " + binOp.Op);
+					}
+					binOp.ResultType = new TypeDetail(TypePrimitive.Number);
+					break;
+
+				case BinaryOps.GreaterThan:
+				case BinaryOps.LessThan:
+					if (LHSType.TypePrimitive != TypePrimitive.Number)
+					{
+						throw new Exception("Expected LHS type of " + TypePrimitive.Number + " but got " + LHSType + ", for operator " + binOp.Op);
+					}
+					if (RHSType.TypePrimitive != TypePrimitive.Number)
+					{
+						throw new Exception("Expected RHS type of " + TypePrimitive.Number + " but got " + RHSType + ", for operator " + binOp.Op);
+					}
+					binOp.ResultType = new TypeDetail(TypePrimitive.Boolean);
+					break;
+
+				case BinaryOps.Equals:
+				case BinaryOps.NotEquals:
+					if (LHSType != RHSType)
+					{
+						throw new Exception("LHS type of " + LHSType + " does not match RHS type of " + RHSType + ", for operator " + binOp.Op);
+					}
+					binOp.ResultType = new TypeDetail(TypePrimitive.Boolean);
+					break;
+
+				case BinaryOps.StringConcat:
+					if (!(LHSType.TypePrimitive == TypePrimitive.Number ||
+						  LHSType.TypePrimitive == TypePrimitive.String) ||
+						!(RHSType.TypePrimitive == TypePrimitive.Number ||
+					      RHSType.TypePrimitive == TypePrimitive.String))
+					{
+						throw new Exception("String concatenation only works on " + TypePrimitive.Number + " or " + TypePrimitive.String);
+					}
+					binOp.ResultType = new TypeDetail(TypePrimitive.String);
+					break;
+
+				case BinaryOps.And:
+				case BinaryOps.Or:
+					if (LHSType.TypePrimitive != TypePrimitive.Boolean ||
+						RHSType.TypePrimitive != TypePrimitive.Boolean)
+					{
+						throw new Exception("Logic operators only operate on booleans");
+					}
+					binOp.ResultType = LHSType;
+					break;
+					
+				default:
+					throw new Exception("Unhandled Operator: " + binOp.Op);
 			}
 
-			return LHSType;
+			return binOp.ResultType;
 		}
 
 		private TypeDetail TypeCheck(ASTFunctionCall funcCall)
@@ -66,6 +130,12 @@ namespace PaprikaLang
 
 		private TypeDetail TypeCheck(ASTIfStatement ifStatement)
 		{
+			TypeDetail conditionType = TypeCheck(ifStatement.ConditionExpr as dynamic);
+			if (conditionType.TypePrimitive != TypePrimitive.Boolean)
+			{
+				throw new Exception("If-condition was of type " + conditionType + " but must be " + TypePrimitive.Boolean);
+			}
+
 			TypeDetail ifBlockType = TypeCheckBlock(ifStatement.IfBody);
 
 			if (ifStatement.ElseBody != null)
@@ -74,7 +144,7 @@ namespace PaprikaLang
 
 				if (ifBlockType != elseBlockType)
 				{
-					throw new Exception("If block type of " + ifBlockType + " and Else block type of " + elseBlockType + " do not match");
+					throw new Exception("If-block type of " + ifBlockType + " and Else block type of " + elseBlockType + " do not match");
 				}
 			}
 

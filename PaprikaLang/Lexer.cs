@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Text.RegularExpressions;
+
 namespace PaprikaLang
 {
 	public enum TokenType
@@ -14,6 +16,8 @@ namespace PaprikaLang
 		Function,
 		If,
 		Else,
+		And,
+		Or,
 
 		// special punctuation & operators
 		Arrow,
@@ -147,8 +151,14 @@ namespace PaprikaLang
 			int startIdx = cursor.CharIdx;
 			cursor.AdvanceWhile(c => c != '"');
 
-			EmitToken(TokenType.StringLiteral, cursor.GetString(startIdx));
+			string str = cursor.GetString(startIdx);
 			cursor.Advance(); // eat the closing quote
+
+			// apply escapements (\n, \t etc)
+			str = Regex.Unescape(str);
+
+			EmitToken(TokenType.StringLiteral, str);
+
 
 			return true;
 		}
@@ -185,6 +195,14 @@ namespace PaprikaLang
 
 				case "else":
 					type = TokenType.Else;
+					break;
+
+				case "and":
+					type = TokenType.And;
+					break;
+
+				case "or":
+					type = TokenType.Or;
 					break;
 			}
 

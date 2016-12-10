@@ -9,7 +9,7 @@ namespace PaprikaLang
 	{
 		public static void Main(string[] args)
 		{
-			string sourceFilePath = "program.paprika";
+			string sourceFilePath = "paprika scripts/program.paprika";
 			if (args.Length > 0)
 			{
 				sourceFilePath = args[0];

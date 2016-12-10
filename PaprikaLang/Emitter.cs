@@ -142,9 +142,9 @@ namespace PaprikaLang
 		public MethodBuilder CreateMethodBuilder(FunctionSymbol funcSym)
 		{
 			Type[] paramTypes = funcSym.Params.Select(
-				p => DotNetTypeMapper.MapTypeInfo(p.Type)).ToArray();
+				p => loweredSymbols.GetType(p.Type)).ToArray();
 
-			Type returnType = DotNetTypeMapper.MapTypeInfo(funcSym.ReturnType);
+			Type returnType = loweredSymbols.GetType(funcSym.ReturnType);
 
 			MethodBuilder method = typeBuilder.DefineMethod(
 				funcSym.Name,
@@ -207,36 +207,80 @@ namespace PaprikaLang
 
 		private void Gen(ASTBinaryOperator binOp, ILGenerator ilGen)
 		{
-			Gen(binOp.LHS as dynamic, ilGen);
-			Gen(binOp.RHS as dynamic, ilGen);
-
-			switch (binOp.Op)
+			bool isStringOp = binOp.ResultType.TypePrimitive == TypePrimitive.String;
+			if (isStringOp)
 			{
-				case BinaryOps.Add:
-					ilGen.Emit(OpCodes.Add);
-					return;
-				case BinaryOps.Subtract:
-					ilGen.Emit(OpCodes.Sub);
-					return;
-				case BinaryOps.Multiply:
-					ilGen.Emit(OpCodes.Mul);
-					return;
-				case BinaryOps.Divide:
-					ilGen.Emit(OpCodes.Div);
-					return;
-				case BinaryOps.Equals:
-					ilGen.Emit(OpCodes.Ceq);
-					return;
-				case BinaryOps.NotEquals:
-					ilGen.Emit(OpCodes.Ceq);
-					ilGen.Emit(OpCodes.Not);
-					return;
-				case BinaryOps.GreaterThan:
-					ilGen.Emit(OpCodes.Cgt);
-					return;
-				case BinaryOps.LessThan:
-					ilGen.Emit(OpCodes.Clt);
-					return;
+				Gen(binOp.LHS as dynamic, ilGen);
+				Type LHSLoweredType = loweredSymbols.GetType(binOp.LHSType);
+				ilGen.Emit(OpCodes.Box, LHSLoweredType);
+
+				Gen(binOp.RHS as dynamic, ilGen);
+				Type RHSLoweredType = loweredSymbols.GetType(binOp.RHSType);
+				ilGen.Emit(OpCodes.Box, RHSLoweredType);
+
+				MethodInfo equalsMethod = typeof(string).GetMethod("Equals", new System.Type[] { typeof(string), typeof(string) });
+				MethodInfo concatMethod = typeof(string).GetMethod("Concat", new System.Type[] { LHSLoweredType, RHSLoweredType });
+
+				switch (binOp.Op)
+				{
+					case BinaryOps.Equals:
+						ilGen.Emit(OpCodes.Call, equalsMethod);
+						return;
+					case BinaryOps.NotEquals:
+						ilGen.Emit(OpCodes.Call, equalsMethod);
+						ilGen.Emit(OpCodes.Not);
+						return;
+					case BinaryOps.StringConcat:
+						ilGen.Emit(OpCodes.Call, concatMethod);
+						return;
+					default:
+						throw new Exception("Unexpected binary operator for string based operands: " + binOp.Op);
+				}
+			}
+			else
+			{
+				Gen(binOp.LHS as dynamic, ilGen);
+				Gen(binOp.RHS as dynamic, ilGen);
+
+				switch (binOp.Op)
+				{
+					case BinaryOps.Add:
+						ilGen.Emit(OpCodes.Add);
+						return;
+					case BinaryOps.Subtract:
+						ilGen.Emit(OpCodes.Sub);
+						return;
+					case BinaryOps.Multiply:
+						ilGen.Emit(OpCodes.Mul);
+						return;
+					case BinaryOps.Divide:
+						ilGen.Emit(OpCodes.Div);
+						return;
+					case BinaryOps.Equals:
+						ilGen.Emit(OpCodes.Ceq);
+						return;
+					case BinaryOps.NotEquals:
+						ilGen.Emit(OpCodes.Ceq);
+						ilGen.Emit(OpCodes.Not);
+						return;
+					case BinaryOps.GreaterThan:
+						ilGen.Emit(OpCodes.Cgt);
+						return;
+					case BinaryOps.LessThan:
+						ilGen.Emit(OpCodes.Clt);
+						return;
+					case BinaryOps.Modulus:
+						ilGen.Emit(OpCodes.Rem);
+						return;
+					case BinaryOps.And:
+						ilGen.Emit(OpCodes.And);
+						return;
+					case BinaryOps.Or:
+						ilGen.Emit(OpCodes.Or);
+						return;
+					default:
+						throw new Exception("Unexpected binary operator for number based operands: " + binOp.Op);
+				}
 			}
 		}
 

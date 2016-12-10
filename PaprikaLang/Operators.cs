@@ -7,10 +7,16 @@ namespace PaprikaLang
 		Subtract,
 		Multiply,
 		Divide,
+		Modulus,
+
 		StringConcat,
 
 		GreaterThan,
 		LessThan,
+
+		And,
+		Or,
+
 		Equals,
 		NotEquals
 	}
@@ -26,29 +32,43 @@ namespace PaprikaLang
 	{
 		public static int Of(BinaryOps? op)
 		{
+			if (op == null)
+			{
+				return -1;
+			}
+
 			switch (op)
 			{
+				case BinaryOps.Or:
+					return 1;
+
+				case BinaryOps.And:
+					return 2;
+
 				case BinaryOps.Equals:
 				case BinaryOps.NotEquals:
-					return 1;
+					return 3;
 
 				case BinaryOps.GreaterThan:
 				case BinaryOps.LessThan:
-					return 2;
-					
-				case BinaryOps.Add:
-				case BinaryOps.Subtract:
-					return 3;
-
-				case BinaryOps.Multiply:
-				case BinaryOps.Divide:
 					return 4;
 
 				case BinaryOps.StringConcat:
 					return 5;
+					
+				case BinaryOps.Add:
+				case BinaryOps.Subtract:
+					return 6;
+
+				case BinaryOps.Multiply:
+				case BinaryOps.Divide:
+				case BinaryOps.Modulus:
+					return 7;
+
+				
 			}
 
-			return -1;
+			throw new Exception("Unhandled operator: " + op);
 		}
 	}
 
@@ -64,6 +84,7 @@ namespace PaprikaLang
 				case '/': return BinaryOps.Divide;
 				case '>': return BinaryOps.GreaterThan;
 				case '<': return BinaryOps.LessThan;
+				case '%': return BinaryOps.Modulus;
 			}
 
 			return null;
@@ -94,38 +115,45 @@ namespace PaprikaLang
 
 		public static BinaryOps? ParseBinaryOp(LexerDriver lexer, bool advanceLexerOnMatch)
 		{
+			BinaryOps? op = null;
+			bool usesLookahead = false;
+
 			if (lexer.IncomingToken == TokenType.SpecialChar)
 			{
-				BinaryOps? op;
-
 				// identify multi-char operators
 				if (lexer.LookaheadToken == TokenType.SpecialChar)
 				{
 					op = IdentifyMultiCharOp(lexer.IncomingValue[0], lexer.LookaheadValue[0]);
-					if (op != null)
-					{
-						if (advanceLexerOnMatch)
-						{
-							lexer.AdvanceLexer();
-							lexer.AdvanceLexer();
-						}
-						return op;
-					}
+					usesLookahead = op != null;
 				}
 
 				// identify single-char operators
-				op = IdentifySingleCharOp(lexer.IncomingValue[0]);
-				if (op != null)
+				if (op == null)
 				{
-					if (advanceLexerOnMatch)
-					{
-						lexer.AdvanceLexer();
-					}
-					return op;
+					op = IdentifySingleCharOp(lexer.IncomingValue[0]);
+				}
+
+			}
+			else if (lexer.IncomingToken == TokenType.And)
+			{
+				op = BinaryOps.And;
+			}
+			else if (lexer.IncomingToken == TokenType.Or)
+			{
+				op = BinaryOps.Or;
+			}
+
+			// advance the lexer appropriately
+			if (op != null && advanceLexerOnMatch)
+			{
+				lexer.AdvanceLexer();
+				if (usesLookahead)
+				{
+					lexer.AdvanceLexer();
 				}
 			}
 
-			return null;
+			return op;
 		}
 	}
 }

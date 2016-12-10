@@ -32,7 +32,7 @@ namespace PaprikaLang
 		private ASTNode TryParseExpression()
 		{
 			ASTNode operand = TryParseOperand();
-			return operand == null ? null : ParseExpressionSequence(operand, false);
+			return operand == null ? null : ParseExpressionSequence(operand, -1);
 		}
 
 		private ASTNode TryParseOperand()
@@ -63,7 +63,7 @@ namespace PaprikaLang
 			return null;
 		}
 
-		private ASTNode ParseExpressionSequence(ASTNode LHS, Boolean isSubExpr)
+		private ASTNode ParseExpressionSequence(ASTNode LHS, int minPrecedenceThreshold)
 		{
 			// keep going while there are still operators in the sequence
 			while (true)
@@ -89,18 +89,19 @@ namespace PaprikaLang
 				int rightPrecedence = Precedence.Of(rightOperator);
 				if (rightPrecedence > leftPrecedence)
 				{
+					int subExpressionMinPrecedence = leftPrecedence;
 					// the operand is the LHS of the sub-expression
-					operand = ParseExpressionSequence(operand, true);
+					operand = ParseExpressionSequence(operand, subExpressionMinPrecedence);
 				}
 
 				// fold RHS operand into the overall LHS expression
 				LHS = new ASTBinaryOperator(leftOperator.Value, LHS, operand);
 
-				// if we are a *sub* expression and the precedence is weaker on the right then
-				// we have reached the end of our stronger-precedence sub-expression.
-				// if we are a top-level expression then we must carry on to parse the full
-				// expression (we are already the weakest precedence).
-				if (rightPrecedence < leftPrecedence && isSubExpr)
+				// keep going whilst our subexpression has higher precedence operators
+				// than our predecessor expression. Once the RHS is weaker than the threshold
+				// then we must stop parsing since our subexpression will be the LHS and
+				// folded into a binop at a higher recursive level.
+				if (rightPrecedence < minPrecedenceThreshold)
 				{
 					break;
 				}

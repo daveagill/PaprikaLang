@@ -62,8 +62,11 @@ namespace PaprikaLang
 			SymbolTable ifScope = new SymbolTable(symTab);
 			BindScope(ifStatement.IfBody, ifScope);
 
-			SymbolTable elseScope = new SymbolTable(symTab);
-			BindScope(ifStatement.ElseBody, elseScope);
+			if (ifStatement.ElseBody != null)
+			{
+				SymbolTable elseScope = new SymbolTable(symTab);
+				BindScope(ifStatement.ElseBody, elseScope);
+			}
 		}
 
 		// nothing to do here

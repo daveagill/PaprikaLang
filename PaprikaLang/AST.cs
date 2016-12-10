@@ -60,6 +60,10 @@ namespace PaprikaLang
 		public ASTNode LHS { get; }
 		public ASTNode RHS { get; }
 
+		public TypeDetail LHSType { get; set; }
+		public TypeDetail RHSType { get; set; }
+		public TypeDetail ResultType { get; set; }
+
 		public ASTBinaryOperator(BinaryOps op, ASTNode LHS, ASTNode RHS)
 		{
 			this.Op = op;

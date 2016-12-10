@@ -1,0 +1,16 @@
+﻿func IsFive(x number) -> string
+{
+	if x == 5
+	{
+		"It's five! (◕‿◕)"
+	}
+	else
+	{
+		x .. " is not five! (ಠ_ಠ)"
+	}
+}
+
+func Main() -> string
+{
+	IsFive(7)
+}

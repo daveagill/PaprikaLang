@@ -1,0 +1,16 @@
+﻿func CountTo(x number, result string) -> string
+{
+	if x == 0
+	{
+		"0"
+	}
+	else
+	{
+		Count(x - 1, result) .. ", " .. x
+	}
+}
+
+func Main() -> number
+{
+	CountTo(10)
+}

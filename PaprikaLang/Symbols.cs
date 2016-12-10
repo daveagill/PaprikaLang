@@ -8,6 +8,7 @@ namespace PaprikaLang
 	{
 		Number,
 		String,
+		Boolean,
 		Func,
 		UserDefined,
 		Unknown

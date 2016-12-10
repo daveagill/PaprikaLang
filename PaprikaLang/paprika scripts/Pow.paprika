@@ -1,0 +1,16 @@
+﻿func Pow(x number, power number) -> number
+{
+	if power == 0
+	{
+		1
+	}
+	else
+	{
+		x * Pow(x, power - 1)
+	}
+}
+
+func Main() -> number
+{
+	Pow(2, 10)
+}
