@@ -6,7 +6,7 @@
 	}
 	else
 	{
-		Count(x - 1, result) .. ", " .. x
+		CountTo(x - 1, result) .. ", " .. x
 	}
 }
 
