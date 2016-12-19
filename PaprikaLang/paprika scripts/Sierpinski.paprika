@@ -37,14 +37,8 @@ func SierpinskiFractal(n number, x number, y number, img string) -> string
 	{
 		if x < n
 		{
-			if InCarpet(x, y) == 1
-			{
-				SierpinskiFractal(n, x+1, y, img .. "██")
-			}
-			else
-			{
-				SierpinskiFractal(n, x+1, y, img .. "  ")
-			}
+			let cell string = if InCarpet(x, y) == 1 { "██" } else { "  " }
+			SierpinskiFractal(n, x+1, y, img .. cell)
 		}
 		else
 		{

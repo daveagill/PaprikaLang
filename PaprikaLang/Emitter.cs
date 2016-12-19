@@ -38,7 +38,7 @@ namespace PaprikaLang
 			TypeBuilder typeBuilder = moduleBuilder.DefineType(mainClassName, TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract | TypeAttributes.Public);
 
 			LoweredSymbolTable loweredSymbols =
-				new SymbolLoweringStage(assemblyBuilder, typeBuilder).LowerSymbols(module);
+				new StructuralSymbolLoweringStage(assemblyBuilder, typeBuilder).LowerSymbols(module);
 
 			new ILGenStage(loweredSymbols).EmitIL(module);
 
@@ -50,7 +50,8 @@ namespace PaprikaLang
 	public class LoweredSymbolTable
 	{
 		private IDictionary<FunctionSymbol, MethodBuilder> funcsToMethods = new Dictionary<FunctionSymbol, MethodBuilder>();
-		private IDictionary<NamedValueSymbol, short> argsToIndex = new Dictionary<NamedValueSymbol, short>();
+		private IDictionary<ParamSymbol, short> argsToIndex = new Dictionary<ParamSymbol, short>();
+		private IDictionary<LocalSymbol, LocalBuilder> localSymbolsToBuilders = new Dictionary<LocalSymbol, LocalBuilder>();
 
 		public void AddMethod(FunctionSymbol funcSym, MethodBuilder methodBuilder)
 		{
@@ -64,6 +65,11 @@ namespace PaprikaLang
 			}
 		}
 
+		public void AddLocal(LocalSymbol locaSym, LocalBuilder localBuilder)
+		{
+			localSymbolsToBuilders.Add(locaSym, localBuilder);
+		}
+
 		public MethodInfo GetMethod(FunctionSymbol funcSym)
 		{
 			return funcsToMethods[funcSym];
@@ -74,9 +80,14 @@ namespace PaprikaLang
 			return funcsToMethods[funcSym].GetILGenerator();
 		}
 
-		public short GetArgIndex(NamedValueSymbol arg)
+		public short GetArgIndex(ParamSymbol arg)
 		{
 			return argsToIndex[arg];
+		}
+
+		public LocalBuilder GetLocal(LocalSymbol localSym)
+		{
+			return localSymbolsToBuilders[localSym];
 		}
 
 		public Type GetType(TypeDetail typeDetail)
@@ -85,14 +96,14 @@ namespace PaprikaLang
 		}
 	}
 
-	public class SymbolLoweringStage
+	public class StructuralSymbolLoweringStage
 	{
 		private AssemblyBuilder assemblyBuilder;
 		private TypeBuilder typeBuilder;
 
 		private LoweredSymbolTable loweredSymbols = new LoweredSymbolTable();
 
-		public SymbolLoweringStage(AssemblyBuilder assemblyBuilder, TypeBuilder typeBuilder)
+		public StructuralSymbolLoweringStage(AssemblyBuilder assemblyBuilder, TypeBuilder typeBuilder)
 		{
 			this.assemblyBuilder = assemblyBuilder;
 			this.typeBuilder = typeBuilder;
@@ -182,6 +193,17 @@ namespace PaprikaLang
 			ilGen.Emit(OpCodes.Ret);
 		}
 
+		private void Gen(ASTLetDef letDef, ILGenerator ilGen)
+		{
+			LocalBuilder local = ilGen.DeclareLocal(
+				loweredSymbols.GetType(letDef.ReferencedSymbol.Type));
+
+			loweredSymbols.AddLocal(letDef.ReferencedSymbol, local);
+
+			GenBlock(letDef.AssignmentBody, ilGen);
+			ilGen.Emit(OpCodes.Stloc, local);
+		}
+
 		private void Gen(ASTNumeric numeric, ILGenerator ilGen)
 		{
 			ilGen.Emit(OpCodes.Ldc_R8, numeric.Value);
@@ -194,10 +216,15 @@ namespace PaprikaLang
 
 		private void Gen(ASTNamedValue namedValue, ILGenerator ilGen)
 		{
-			if (namedValue.ReferencedSymbol is NamedValueSymbol)
+			if (namedValue.ReferencedSymbol is ParamSymbol)
 			{
-				short argIndex = loweredSymbols.GetArgIndex((NamedValueSymbol)namedValue.ReferencedSymbol);
+				short argIndex = loweredSymbols.GetArgIndex((ParamSymbol)namedValue.ReferencedSymbol);
 				ilGen.Emit(OpCodes.Ldarg, argIndex);
+			}
+			else if (namedValue.ReferencedSymbol is LocalSymbol)
+			{
+				LocalBuilder local = loweredSymbols.GetLocal((LocalSymbol)namedValue.ReferencedSymbol);
+				ilGen.Emit(OpCodes.Ldloc, local);
 			}
 			else
 			{
@@ -324,8 +351,14 @@ namespace PaprikaLang
 			// emit n-1 body nodes but discard them from the stack
 			for (int i = 0; i < block.Count - 1; ++i)
 			{
-				Gen(block[i] as dynamic, ilGen);
-				ilGen.Emit(OpCodes.Pop);
+				ASTNode node = block[i];
+				Gen(node as dynamic, ilGen);
+
+				// expressions leave values on the stack which we need to discard
+				if (node is ASTExpression)
+				{
+					ilGen.Emit(OpCodes.Pop);
+				}
 			}
 
 			// emit the last body node to keep on the stack

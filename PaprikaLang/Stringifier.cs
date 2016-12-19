@@ -61,6 +61,11 @@ namespace PaprikaLang
 			return s + " " + StringifyBlock(funcDef.Body);
 		}
 
+		private string Stringify(ASTLetDef letDef)
+		{
+			return "let " + letDef.Name + " " + letDef.Type + " = " + StringifyBlock(letDef.AssignmentBody);
+		}
+
 		private string Stringify(ASTNode untyped)
 		{
 			throw new Exception("Unhandled ASTNode: " + untyped.GetType());

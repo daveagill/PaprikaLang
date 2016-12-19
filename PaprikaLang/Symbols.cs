@@ -84,7 +84,7 @@ namespace PaprikaLang
 	public class FunctionSymbol : ISymbol
 	{
 		public string Name { get; }
-		public IList<NamedValueSymbol> Params { get; }
+		public IList<ParamSymbol> Params { get; }
 		public TypeDetail Type { get; }
 		public SymbolTable SymbolTable { get; }
 		public TypeDetail ReturnType { get; }
@@ -92,19 +92,31 @@ namespace PaprikaLang
 		public FunctionSymbol(string name, SymbolTable symbolTable, TypeDetail returnType)
 		{
 			Name = name;
-			Params = new List<NamedValueSymbol>();
+			Params = new List<ParamSymbol>();
 			SymbolTable = symbolTable;
 			ReturnType = returnType;
-			Type = new TypeDetail(TypePrimitive.Func); // TOOD do function types properly
+			Type = new TypeDetail(TypePrimitive.Func); // TODO do function types properly
 		}
 	}
 
-	public class NamedValueSymbol : ISymbol
+	public class ParamSymbol : ISymbol
 	{
 		public string Name { get; }
 		public TypeDetail Type { get; }
 
-		public NamedValueSymbol(string name, TypeDetail typeInfo)
+		public ParamSymbol(string name, TypeDetail typeInfo)
+		{
+			Name = name;
+			Type = typeInfo;
+		}
+	}
+
+	public class LocalSymbol : ISymbol
+	{
+		public string Name { get; }
+		public TypeDetail Type { get; }
+
+		public LocalSymbol(string name, TypeDetail typeInfo)
 		{
 			Name = name;
 			Type = typeInfo;

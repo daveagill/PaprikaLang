@@ -47,12 +47,22 @@ namespace PaprikaLang
 			foreach (ASTFunctionDef.ASTParam param in funcDef.Args)
 			{
 				TypeDetail paramType = symTab.ResolveType(param.Type);
-				NamedValueSymbol paramSym = new NamedValueSymbol(param.Name, paramType);
+				ParamSymbol paramSym = new ParamSymbol(param.Name, paramType);
 				functionScope.Add(paramSym);
 				funcSym.Params.Add(paramSym);
 			}
 
 			funcDef.Symbol = funcSym;
+		}
+
+		private void Bind(ASTLetDef letDef)
+		{
+			BindScope(letDef.AssignmentBody, new SymbolTable(symTab));
+
+			TypeDetail type = symTab.ResolveType(letDef.Type);
+			letDef.ReferencedSymbol = new LocalSymbol(letDef.Name, type);
+
+			symTab.Add(letDef.ReferencedSymbol);
 		}
 
 		private void Bind(ASTIfStatement ifStatement)

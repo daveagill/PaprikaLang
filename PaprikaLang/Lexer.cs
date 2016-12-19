@@ -14,6 +14,7 @@ namespace PaprikaLang
 
 		// keywords
 		Function,
+		Let,
 		If,
 		Else,
 		And,
@@ -187,6 +188,10 @@ namespace PaprikaLang
 			{
 				case "func":
 					type = TokenType.Function;
+					break;
+
+				case "let":
+					type = TokenType.Let;
 					break;
 
 				case "if":

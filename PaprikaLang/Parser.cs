@@ -29,13 +29,13 @@ namespace PaprikaLang
 			return new ASTModule(funcDefs);
 		}
 
-		private ASTNode TryParseExpression()
+		private ASTExpression TryParseExpression()
 		{
-			ASTNode operand = TryParseOperand();
+			ASTExpression operand = TryParseOperand();
 			return operand == null ? null : ParseExpressionSequence(operand, -1);
 		}
 
-		private ASTNode TryParseOperand()
+		private ASTExpression TryParseOperand()
 		{
 			if (lexer.Accept(TokenType.NumericLiteral))
 			{
@@ -45,13 +45,17 @@ namespace PaprikaLang
 			{
 				return new ASTString(lexer.AcceptedValue);
 			}
-			else if (lexer.Accept(TokenType.Identifier))
+			else if (lexer.IncomingToken == TokenType.Identifier)
 			{
-				return ParseNamedValueOrFunctionCall(lexer.AcceptedValue);
+				return ParseNamedValueOrFunctionCall();
+			}
+			else if (lexer.IncomingToken == TokenType.If)
+			{
+				return ParseIf();
 			}
 			else if (lexer.AcceptChar('('))
 			{
-				ASTNode exprSeq = TryParseExpression();
+				ASTExpression exprSeq = TryParseExpression();
 				if (exprSeq == null)
 				{
 					throw new Exception("Failed to parse sub-expression syntax at: " + lexer.IncomingToken + ", " + lexer.IncomingValue);
@@ -63,7 +67,7 @@ namespace PaprikaLang
 			return null;
 		}
 
-		private ASTNode ParseExpressionSequence(ASTNode LHS, int minPrecedenceThreshold)
+		private ASTExpression ParseExpressionSequence(ASTExpression LHS, int minPrecedenceThreshold)
 		{
 			// keep going while there are still operators in the sequence
 			while (true)
@@ -76,7 +80,7 @@ namespace PaprikaLang
 				}
 
 				// parse the operand expression
-				ASTNode operand = TryParseOperand();
+				ASTExpression operand = TryParseOperand();
 
 				// lookahead for an optional right operator
 				BinaryOps? rightOperator = BinaryOpSymbolMatcher.LookaheadBinaryOp(lexer);
@@ -124,9 +128,9 @@ namespace PaprikaLang
 				{
 					node = ParseFunctionDef();
 				}
-				else if (lexer.IncomingToken == TokenType.If)
+				else if (lexer.IncomingToken == TokenType.Let)
 				{
-					node = ParseIf();
+					node = ParseLetDef();
 				}
 				else
 				{
@@ -183,11 +187,44 @@ namespace PaprikaLang
 			return new ASTFunctionDef(functionName, args, functionBody, returnType);
 		}
 
-		private ASTNode ParseNamedValueOrFunctionCall(string name)
+		private ASTLetDef ParseLetDef()
 		{
-			// function calls look like named-values except they end with paranthesis and an arguments list
+			lexer.Expect(TokenType.Let);
 
-			// if there's no parenthesis then it's a named value
+			// expect constant name
+			lexer.Expect(TokenType.Identifier);
+			string name = lexer.AcceptedValue;
+
+			// expect constant type
+			lexer.Expect(TokenType.Identifier);
+			string type = lexer.AcceptedValue;
+
+			// expect assignment symbol
+			lexer.ExpectChar('=');
+
+			// the body of the assignment can either be a simple operand or a whole block
+			IList<ASTNode> assignmentBody;
+			ASTExpression operand = TryParseOperand();
+			if (operand == null)
+			{
+				assignmentBody = ParseBlock();
+			}
+			else
+			{
+				assignmentBody = new ASTNode[] { operand };
+			}
+
+			return new ASTLetDef(name, type, assignmentBody);
+		}
+
+		private ASTExpression ParseNamedValueOrFunctionCall()
+		{
+			// named-values and function calls start with a name
+			lexer.Expect(TokenType.Identifier);
+			string name = lexer.AcceptedValue;
+
+			// function calls end with paranthesis and an arguments list
+			// so if there's no parenthesis then it's a named value
 			if (!lexer.AcceptChar('('))
 			{
 				return new ASTNamedValue(name);

@@ -7,7 +7,15 @@ namespace PaprikaLang
 	{
 	}
 
-	public class ASTModule : ASTNode
+	public interface ASTDeclaration : ASTNode
+	{
+	}
+
+	public interface ASTExpression : ASTNode
+	{
+	}
+
+	public class ASTModule : ASTDeclaration
 	{
 		public IList<ASTFunctionDef> FunctionDefs;
 
@@ -17,7 +25,7 @@ namespace PaprikaLang
 		}
 	}
 
-	public class ASTNumeric : ASTNode
+	public class ASTNumeric : ASTExpression
 	{
 		public double Value { get; }
 
@@ -32,7 +40,7 @@ namespace PaprikaLang
 		}
 	}
 
-	public class ASTString : ASTNode
+	public class ASTString : ASTExpression
 	{
 		public string Value { get; }
 
@@ -42,7 +50,7 @@ namespace PaprikaLang
 		}
 	}
 
-	public class ASTNamedValue : ASTNode
+	public class ASTNamedValue : ASTExpression
 	{
 		public string Name { get; }
 
@@ -54,7 +62,7 @@ namespace PaprikaLang
 		}
 	}
 
-	public class ASTBinaryOperator : ASTNode
+	public class ASTBinaryOperator : ASTExpression
 	{
 		public BinaryOps Op { get; }
 		public ASTNode LHS { get; }
@@ -72,7 +80,7 @@ namespace PaprikaLang
 		}
 	}
 
-	public class ASTFunctionDef : ASTNode
+	public class ASTFunctionDef : ASTDeclaration
 	{
 		public class ASTParam
 		{
@@ -102,7 +110,23 @@ namespace PaprikaLang
 		}
 	}
 
-	public class ASTFunctionCall : ASTNode
+	public class ASTLetDef : ASTDeclaration
+	{
+		public string Name { get; }
+		public string Type { get; }
+		public IList<ASTNode> AssignmentBody { get; }
+
+		public LocalSymbol ReferencedSymbol { get; set; }
+
+		public ASTLetDef(string name, string type, IList<ASTNode> assignmentBody)
+		{
+			this.Name = name;
+			this.Type = type;
+			this.AssignmentBody = assignmentBody;
+		}
+	}
+
+	public class ASTFunctionCall : ASTExpression
 	{
 		public string Name { get; }
 		public IList<ASTNode> Args { get; }
@@ -116,7 +140,7 @@ namespace PaprikaLang
 		}
 	}
 
-	public class ASTIfStatement : ASTNode
+	public class ASTIfStatement : ASTExpression
 	{
 		public ASTNode ConditionExpr;
 		public IList<ASTNode> IfBody { get; }
