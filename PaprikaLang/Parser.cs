@@ -29,13 +29,12 @@ namespace PaprikaLang
 			return new ASTModule(funcDefs);
 		}
 
-		private ASTExpression TryParseExpression()
+		private ASTExpression ParseExpression()
 		{
-			ASTExpression operand = TryParseOperand();
-			return operand == null ? null : ParseExpressionSequence(operand, -1);
+			return ParseExpressionSequence(ParseOperand(), -1);
 		}
 
-		private ASTExpression TryParseOperand()
+		private ASTExpression ParseOperand()
 		{
 			if (lexer.Accept(TokenType.NumericLiteral))
 			{
@@ -55,16 +54,12 @@ namespace PaprikaLang
 			}
 			else if (lexer.AcceptChar('('))
 			{
-				ASTExpression exprSeq = TryParseExpression();
-				if (exprSeq == null)
-				{
-					throw new Exception("Failed to parse sub-expression syntax at: " + lexer.IncomingToken + ", " + lexer.IncomingValue);
-				}
+				ASTExpression exprSeq = ParseExpression();
 				lexer.ExpectChar(')');
 				return exprSeq;
 			}
 
-			return null;
+			throw new Exception("Unable to parse operand at: " + lexer.IncomingToken + ", " + lexer.IncomingValue);
 		}
 
 		private ASTExpression ParseExpressionSequence(ASTExpression LHS, int minPrecedenceThreshold)
@@ -79,8 +74,8 @@ namespace PaprikaLang
 					break;
 				}
 
-				// parse the operand expression
-				ASTExpression operand = TryParseOperand();
+				// parse the next operand
+				ASTExpression operand = ParseOperand();
 
 				// lookahead for an optional right operator
 				BinaryOps? rightOperator = BinaryOpSymbolMatcher.LookaheadBinaryOp(lexer);
@@ -134,12 +129,12 @@ namespace PaprikaLang
 				}
 				else
 				{
-					node = TryParseExpression();
+					node = ParseExpression();
 				}
 
-				if (node == null)
+				if (node == null) // this is actually a parse bug
 				{
-					throw new Exception("Failed to identify syntax: " + lexer.IncomingToken + ", " + lexer.IncomingValue);
+					throw new Exception("Unhandled syntax in block: " + lexer.IncomingToken + ", " + lexer.IncomingValue);
 				}
 
 				nodes.Add(node);
@@ -204,14 +199,13 @@ namespace PaprikaLang
 
 			// the body of the assignment can either be a simple operand or a whole block
 			IList<ASTNode> assignmentBody;
-			ASTExpression operand = TryParseOperand();
-			if (operand == null)
+			if (lexer.IsIncomingChar('{'))
 			{
 				assignmentBody = ParseBlock();
 			}
 			else
 			{
-				assignmentBody = new ASTNode[] { operand };
+				assignmentBody = new ASTNode[] { ParseOperand() };
 			}
 
 			return new ASTLetDef(name, type, assignmentBody);
@@ -241,12 +235,7 @@ namespace PaprikaLang
 					lexer.ExpectChar(',');
 				}
 
-				ASTNode argExpr = TryParseExpression();
-				if (argExpr == null)
-				{
-					throw new Exception("Illegal expression as argument to function " + name);
-				}
-				args.Add(argExpr);
+				args.Add( ParseExpression() );
 			}
 
 			return new ASTFunctionCall(name, args);
@@ -255,7 +244,7 @@ namespace PaprikaLang
 		private ASTIfStatement ParseIf()
 		{
 			lexer.Expect(TokenType.If);
-			ASTNode conditionExpr = TryParseExpression();
+			ASTNode conditionExpr = ParseExpression();
 			IList<ASTNode> ifBody = ParseBlock();
 
 			IList<ASTNode> elseBody = null;
