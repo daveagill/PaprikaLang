@@ -15,6 +15,16 @@ namespace PaprikaLang
 			return s;
 		}
 
+		private static string Stringify(ASTBlock block)
+		{
+			string s = "{\n";
+			foreach (ASTNode node in block.Body)
+			{
+				s += Stringify(node as dynamic) + '\n';
+			}
+			return s + "}";
+		}
+
 		private static string Stringify(ASTString str)
 		{
 			return "'" + str.Value + "'";
@@ -45,11 +55,11 @@ namespace PaprikaLang
 		private static string Stringify(ASTIfStatement ifStatement)
 		{
 			string s = "if " + Stringify(ifStatement.ConditionExpr as dynamic) +
-				" " + StringifyBlock(ifStatement.IfBody);
+				" " + Stringify(ifStatement.IfBody);
 			
 			if (ifStatement.ElseBody != null)
 			{
-				s += " else " + StringifyBlock(ifStatement.ElseBody);
+				s += " else " + Stringify(ifStatement.ElseBody);
 			}
 
 			return s;
@@ -58,12 +68,12 @@ namespace PaprikaLang
 		private static string Stringify(ASTFunctionDef funcDef)
 		{
 			string s = "func " + funcDef.Name + "(" + funcDef.Args.Count + ") -> " + Stringify(funcDef.ReturnType);
-			return s + " " + StringifyBlock(funcDef.Body);
+			return s + " " + Stringify(funcDef.Body);
 		}
 
 		private static string Stringify(ASTLetDef letDef)
 		{
-			return "let " + letDef.Name + " " + Stringify(letDef.Type) + " = " + StringifyBlock(letDef.AssignmentBody);
+			return "let " + letDef.Name + " " + Stringify(letDef.Type) + " = " + Stringify(letDef.AssignmentBody);
 		}
 
 		private static string Stringify(ASTList list)
@@ -94,16 +104,6 @@ namespace PaprikaLang
 		private static string Stringify(ASTNode untyped)
 		{
 			throw new Exception("Unhandled ASTNode: " + untyped.GetType());
-		}
-
-		private static string StringifyBlock(IList<ASTNode> block)
-		{
-			string s = "{\n";
-			foreach (ASTNode node in block)
-			{
-				s += Stringify(node as dynamic) + '\n';
-			}
-			return s + "}";
 		}
 	}
 }

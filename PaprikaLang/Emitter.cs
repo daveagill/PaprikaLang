@@ -151,7 +151,7 @@ namespace PaprikaLang
 		private MethodInfo DeclareMethodBuilders(ASTFunctionDef funcDef)
 		{
 			// declare all nested methods
-			foreach (var node in funcDef.Body)
+			foreach (var node in funcDef.Body.Body)
 			{
 				if (node is ASTFunctionDef)
 				{
@@ -197,11 +197,30 @@ namespace PaprikaLang
 			}
 		}
 
+		private void Gen(ASTBlock block, ILGenerator ilGen)
+		{
+			// emit n-1 body nodes but discard them from the stack
+			for (int i = 0; i < block.Body.Count - 1; ++i)
+			{
+				ASTNode node = block.Body[i];
+				Gen(node as dynamic, ilGen);
+
+				// expressions leave values on the stack which we need to discard
+				if (node is ASTExpression)
+				{
+					ilGen.Emit(OpCodes.Pop);
+				}
+			}
+
+			// emit the last body node to keep on the stack
+			Gen(block.Body.Last() as dynamic, ilGen);
+		}
+
 		private void Gen(ASTFunctionDef funcDef, ILGenerator ilGen)
 		{
 			// overwrite ilGen with the appropriate one for this method
 			ilGen = loweredSymbols.GetMethodILGenerator(funcDef.Symbol);
-			GenBlock(funcDef.Body, ilGen);
+			Gen(funcDef.Body, ilGen);
 			ilGen.Emit(OpCodes.Ret);
 		}
 
@@ -212,7 +231,7 @@ namespace PaprikaLang
 
 			loweredSymbols.AddLocal(letDef.ReferencedSymbol, local);
 
-			GenBlock(letDef.AssignmentBody, ilGen);
+			Gen(letDef.AssignmentBody, ilGen);
 			ilGen.Emit(OpCodes.Stloc, local);
 		}
 
@@ -357,7 +376,7 @@ namespace PaprikaLang
 			{
 				Label doneLabel = ilGen.DefineLabel();
 				ilGen.Emit(OpCodes.Brfalse, doneLabel);
-				GenBlock(ifStatement.IfBody, ilGen);
+				Gen(ifStatement.IfBody, ilGen);
 				ilGen.MarkLabel(doneLabel);
 			}
 			else // an if-else statement
@@ -365,31 +384,12 @@ namespace PaprikaLang
 				Label doneLabel = ilGen.DefineLabel();
 				Label elseLabel = ilGen.DefineLabel();
 				ilGen.Emit(OpCodes.Brfalse, elseLabel);
-				GenBlock(ifStatement.IfBody, ilGen);
+				Gen(ifStatement.IfBody, ilGen);
 				ilGen.Emit(OpCodes.Br, doneLabel);
 				ilGen.MarkLabel(elseLabel);
-				GenBlock(ifStatement.ElseBody, ilGen);
+				Gen(ifStatement.ElseBody, ilGen);
 				ilGen.MarkLabel(doneLabel);
 			}
-		}
-
-		private void GenBlock(IList<ASTNode> block, ILGenerator ilGen)
-		{
-			// emit n-1 body nodes but discard them from the stack
-			for (int i = 0; i < block.Count - 1; ++i)
-			{
-				ASTNode node = block[i];
-				Gen(node as dynamic, ilGen);
-
-				// expressions leave values on the stack which we need to discard
-				if (node is ASTExpression)
-				{
-					ilGen.Emit(OpCodes.Pop);
-				}
-			}
-
-			// emit the last body node to keep on the stack
-			Gen(block.Last() as dynamic, ilGen);
 		}
 	}
 }

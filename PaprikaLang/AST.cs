@@ -17,11 +17,21 @@ namespace PaprikaLang
 
 	public class ASTModule : ASTDeclaration
 	{
-		public IList<ASTFunctionDef> FunctionDefs;
+		public IList<ASTFunctionDef> FunctionDefs { get; }
 
 		public ASTModule(IList<ASTFunctionDef> functionDefs)
 		{
 			this.FunctionDefs = functionDefs;
+		}
+	}
+
+	public class ASTBlock : ASTExpression
+	{
+		public IList<ASTNode> Body { get; }
+
+		public ASTBlock(IList<ASTNode> body)
+		{
+			this.Body = body;
 		}
 	}
 
@@ -123,11 +133,11 @@ namespace PaprikaLang
 		public string Name { get; }
 		public IList<ASTParam> Args { get; }
 		public ASTTypeNameParts ReturnType { get; }
-		public IList<ASTNode> Body { get; }
+		public ASTBlock Body { get; }
 
 		public FunctionSymbol Symbol { get; set; }
 
-		public ASTFunctionDef(string name, IList<ASTParam> args, IList<ASTNode> body, ASTTypeNameParts returnType)
+		public ASTFunctionDef(string name, IList<ASTParam> args, ASTBlock body, ASTTypeNameParts returnType)
 		{
 			this.Name = name;
 			this.Args = args;
@@ -140,11 +150,11 @@ namespace PaprikaLang
 	{
 		public string Name { get; }
 		public ASTTypeNameParts Type { get; }
-		public IList<ASTNode> AssignmentBody { get; }
+		public ASTBlock AssignmentBody { get; }
 
 		public LocalSymbol ReferencedSymbol { get; set; }
 
-		public ASTLetDef(string name, ASTTypeNameParts type, IList<ASTNode> assignmentBody)
+		public ASTLetDef(string name, ASTTypeNameParts type, ASTBlock assignmentBody)
 		{
 			this.Name = name;
 			this.Type = type;
@@ -169,10 +179,10 @@ namespace PaprikaLang
 	public class ASTIfStatement : ASTExpression
 	{
 		public ASTNode ConditionExpr;
-		public IList<ASTNode> IfBody { get; }
-		public IList<ASTNode> ElseBody { get; }
+		public ASTBlock IfBody { get; }
+		public ASTBlock ElseBody { get; }
 
-		public ASTIfStatement(ASTNode conditionExpr, IList<ASTNode> ifBody, IList<ASTNode> elseBody)
+		public ASTIfStatement(ASTNode conditionExpr, ASTBlock ifBody, ASTBlock elseBody)
 		{
 			this.ConditionExpr = conditionExpr;
 			this.IfBody = ifBody;

@@ -39,7 +39,7 @@ namespace PaprikaLang
 
 		private void Bind(ASTFunctionDef funcDef)
 		{
-			BindScope(funcDef.Body, funcDef.Symbol.SymbolTable);
+			BindScope(funcDef.Body.Body, funcDef.Symbol.SymbolTable);
 		}
 
 		private void DeclareFunctionDef(ASTFunctionDef funcDef)
@@ -62,7 +62,7 @@ namespace PaprikaLang
 
 		private void Bind(ASTLetDef letDef)
 		{
-			BindScope(letDef.AssignmentBody, new SymbolTable(symTab));
+			BindScope(letDef.AssignmentBody.Body, new SymbolTable(symTab));
 
 			TypeDetail type = ResolveConcreteType(letDef.Type);
 			letDef.ReferencedSymbol = new LocalSymbol(letDef.Name, type);
@@ -75,12 +75,12 @@ namespace PaprikaLang
 			Bind(ifStatement.ConditionExpr as dynamic);
 
 			SymbolTable ifScope = new SymbolTable(symTab);
-			BindScope(ifStatement.IfBody, ifScope);
+			BindScope(ifStatement.IfBody.Body, ifScope);
 
 			if (ifStatement.ElseBody != null)
 			{
 				SymbolTable elseScope = new SymbolTable(symTab);
-				BindScope(ifStatement.ElseBody, elseScope);
+				BindScope(ifStatement.ElseBody.Body, elseScope);
 			}
 		}
 
@@ -94,10 +94,6 @@ namespace PaprikaLang
 				Bind(list.Step as dynamic);
 			}
 		}
-
-		// nothing to do here
-		private void Bind(ASTNumeric numeric) { }
-		private void Bind(ASTString str) { }
 
 		private void BindScope(IEnumerable<ASTNode> nodes, SymbolTable scopeSymbolTable)
 		{
@@ -123,6 +119,10 @@ namespace PaprikaLang
 			// restore the original symbol table
 			symTab = originalSymbolTable;
 		}
+
+		// nothing to do here
+		private void Bind(ASTNumeric numeric) { }
+		private void Bind(ASTString str) { }
 
 		private TypeDetail ResolveConcreteType(ASTTypeNameParts type)
 		{

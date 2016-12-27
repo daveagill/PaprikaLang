@@ -13,6 +13,16 @@ namespace PaprikaLang
 			}
 		}
 
+		private TypeDetail TypeCheck(ASTBlock block)
+		{
+			TypeDetail blockReturnType = null;
+			foreach (var node in block.Body)
+			{
+				blockReturnType = TypeCheck(node as dynamic);
+			}
+			return blockReturnType;
+		}
+
 		private TypeDetail TypeCheck(ASTString str)
 		{
 			return TypeDetail.String;
@@ -116,7 +126,7 @@ namespace PaprikaLang
 
 		private TypeDetail TypeCheck(ASTFunctionDef funcDef)
 		{
-			TypeDetail blockReturnType = TypeCheckBlock(funcDef.Body);
+			TypeDetail blockReturnType = TypeCheck(funcDef.Body);
 
 			if (blockReturnType != funcDef.Symbol.ReturnType)
 			{
@@ -130,7 +140,7 @@ namespace PaprikaLang
 
 		private TypeDetail TypeCheck(ASTLetDef letDef)
 		{
-			TypeDetail RHSType = TypeCheckBlock(letDef.AssignmentBody);
+			TypeDetail RHSType = TypeCheck(letDef.AssignmentBody);
 
 			if (letDef.ReferencedSymbol.Type != RHSType)
 			{
@@ -150,11 +160,11 @@ namespace PaprikaLang
 				throw new Exception("If-condition was of type " + conditionType + " but must be " + TypePrimitive.Boolean);
 			}
 
-			TypeDetail ifBlockType = TypeCheckBlock(ifStatement.IfBody);
+			TypeDetail ifBlockType = TypeCheck(ifStatement.IfBody);
 
 			if (ifStatement.ElseBody != null)
 			{
-				TypeDetail elseBlockType = TypeCheckBlock(ifStatement.ElseBody);
+				TypeDetail elseBlockType = TypeCheck(ifStatement.ElseBody);
 
 				if (ifBlockType != elseBlockType)
 				{
@@ -180,16 +190,6 @@ namespace PaprikaLang
 			}
 
 			return TypeDetail.ListOfNumbers;
-		}
-
-		private TypeDetail TypeCheckBlock(IList<ASTNode> block)
-		{
-			TypeDetail blockReturnType = null;
-			foreach (var node in block)
-			{
-				blockReturnType = TypeCheck(node as dynamic);
-			}
-			return blockReturnType;
 		}
 	}
 }

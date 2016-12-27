@@ -133,7 +133,7 @@ namespace PaprikaLang
 			return LHS;
 		}
 
-		private IList<ASTNode> ParseBlock()
+		private ASTBlock ParseBlock()
 		{
 			lexer.ExpectChar('{');
 
@@ -163,7 +163,7 @@ namespace PaprikaLang
 				nodes.Add(node);
 			}
 
-			return nodes;
+			return new ASTBlock(nodes);
 		}
 
 		private ASTFunctionDef ParseFunctionDef()
@@ -198,7 +198,7 @@ namespace PaprikaLang
 			lexer.ExpectChar('>');
 			ASTTypeNameParts returnType = ParseTypeNameParts();
 
-			IList<ASTNode> functionBody = ParseBlock();
+			ASTBlock functionBody = ParseBlock();
 
 			return new ASTFunctionDef(functionName, args, functionBody, returnType);
 		}
@@ -218,14 +218,15 @@ namespace PaprikaLang
 			lexer.ExpectChar('=');
 
 			// the body of the assignment can either be a simple operand or a whole block
-			IList<ASTNode> assignmentBody;
+			ASTBlock assignmentBody;
 			if (lexer.IsIncomingChar('{'))
 			{
 				assignmentBody = ParseBlock();
 			}
 			else
 			{
-				assignmentBody = new ASTNode[] { ParseOperand() };
+				assignmentBody = new ASTBlock(
+					new ASTNode[] { ParseOperand() });
 			}
 
 			return new ASTLetDef(name, type, assignmentBody);
@@ -265,9 +266,9 @@ namespace PaprikaLang
 		{
 			lexer.Expect(TokenType.If);
 			ASTNode conditionExpr = ParseExpression();
-			IList<ASTNode> ifBody = ParseBlock();
+			ASTBlock ifBody = ParseBlock();
 
-			IList<ASTNode> elseBody = null;
+			ASTBlock elseBody = null;
 			if (lexer.Accept(TokenType.Else))
 			{
 				elseBody = ParseBlock();
