@@ -5,8 +5,20 @@ namespace PaprikaLang
 	{
 		public static void Analyse(ASTModule module)
 		{
-			new BindSymbolsStage().Bind(module);
+			new BindSymbolsStage(MakeDefaultScope()).Bind(module);
 			new TypeCheckStage().TypeCheck(module);
+		}
+
+		private static SymbolTable MakeDefaultScope()
+		{
+			SymbolTable defaultScope = new SymbolTable(null);
+
+			defaultScope.AddType(TypeDetail.Number);
+			defaultScope.AddType(TypeDetail.Boolean);
+			defaultScope.AddType(TypeDetail.String);
+			defaultScope.AddType(TypeDetail.UnboundList);
+
+			return defaultScope;
 		}
 	}
 }

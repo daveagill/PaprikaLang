@@ -70,5 +70,11 @@
   <ItemGroup>
     <Folder Include="paprika scripts\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PaprikaLib\PaprikaLib.csproj">
+      <Project>{1560C3C0-BB16-449C-A027-2CBA32EA31BA}</Project>
+      <Name>PaprikaLib</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

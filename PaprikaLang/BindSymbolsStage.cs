@@ -7,9 +7,14 @@ namespace PaprikaLang
 	{
 		private SymbolTable symTab;
 
+		public BindSymbolsStage(SymbolTable defaultScope)
+		{
+			symTab = defaultScope;
+		}
+
 		public void Bind(ASTModule module)
 		{
-			BindScope(module.FunctionDefs, new SymbolTable(null));
+			BindScope(module.FunctionDefs, new SymbolTable(symTab));
 		}
 
 		private void Bind(ASTNamedValue namedValue)
@@ -39,14 +44,14 @@ namespace PaprikaLang
 
 		private void DeclareFunctionDef(ASTFunctionDef funcDef)
 		{
-			TypeDetail returnType = symTab.ResolveType(funcDef.ReturnType);
+			TypeDetail returnType = ResolveConcreteType(funcDef.ReturnType);
 
 			SymbolTable functionScope = new SymbolTable(symTab);
 			FunctionSymbol funcSym = new FunctionSymbol(funcDef.Name, functionScope, returnType);
 			symTab.Add(funcSym);
 			foreach (ASTFunctionDef.ASTParam param in funcDef.Args)
 			{
-				TypeDetail paramType = symTab.ResolveType(param.Type);
+				TypeDetail paramType = ResolveConcreteType(param.Type);
 				ParamSymbol paramSym = new ParamSymbol(param.Name, paramType);
 				functionScope.Add(paramSym);
 				funcSym.Params.Add(paramSym);
@@ -59,7 +64,7 @@ namespace PaprikaLang
 		{
 			BindScope(letDef.AssignmentBody, new SymbolTable(symTab));
 
-			TypeDetail type = symTab.ResolveType(letDef.Type);
+			TypeDetail type = ResolveConcreteType(letDef.Type);
 			letDef.ReferencedSymbol = new LocalSymbol(letDef.Name, type);
 
 			symTab.Add(letDef.ReferencedSymbol);
@@ -76,6 +81,17 @@ namespace PaprikaLang
 			{
 				SymbolTable elseScope = new SymbolTable(symTab);
 				BindScope(ifStatement.ElseBody, elseScope);
+			}
+		}
+
+		private void Bind(ASTList list)
+		{
+			Bind(list.From as dynamic);
+			Bind(list.To as dynamic);
+
+			if (list.Step != null)
+			{
+				Bind(list.Step as dynamic);
 			}
 		}
 
@@ -106,6 +122,36 @@ namespace PaprikaLang
 
 			// restore the original symbol table
 			symTab = originalSymbolTable;
+		}
+
+		private TypeDetail ResolveConcreteType(ASTTypeNameParts type)
+		{
+			TypeDetail mainType = symTab.ResolveType(type.Name);
+
+			// unbound means we need to resolve generic args to make it concrete
+			if (mainType.IsUnbound)
+			{
+				if (mainType.UnboundArgCount != type.GenericArgs.Count)
+				{
+					throw new Exception("Generic argument count mismatch. Type " + mainType +
+					                    "has " + mainType.UnboundArgCount + " args, but " +
+					                    type.GenericArgs.Count + " were provided");
+				}
+
+				IList<TypeDetail> boundArgs = new List<TypeDetail>();
+				foreach (ASTTypeNameParts argType in type.GenericArgs)
+				{
+					boundArgs.Add(ResolveConcreteType(argType));
+				}
+				return new TypeDetail(mainType, boundArgs);
+			}
+
+			// otherwise it is not a generic type and useable as-is
+			if (type.GenericArgs.Count > 0)
+			{
+				throw new Exception(mainType + " is not a generic type");
+			}
+			return mainType;
 		}
 	}
 }

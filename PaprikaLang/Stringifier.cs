@@ -5,7 +5,7 @@ namespace PaprikaLang
 {
 	public class ASTStringifier
 	{
-		public string Stringify(ASTModule module)
+		public static string Stringify(ASTModule module)
 		{
 			string s = "";
 			foreach (ASTFunctionDef funcDef in module.FunctionDefs)
@@ -15,34 +15,34 @@ namespace PaprikaLang
 			return s;
 		}
 
-		private string Stringify(ASTString str)
+		private static string Stringify(ASTString str)
 		{
 			return "'" + str.Value + "'";
 		}
 
-		private string Stringify(ASTNumeric numeric)
+		private static string Stringify(ASTNumeric numeric)
 		{
 			return numeric.Value.ToString();
 		}
 
-		private string Stringify(ASTNamedValue namedValue)
+		private static string Stringify(ASTNamedValue namedValue)
 		{
 			return namedValue.Name;
 		}
 
-		private string Stringify(ASTBinaryOperator binOp)
+		private static string Stringify(ASTBinaryOperator binOp)
 		{
 			return "(" + Stringify(binOp.LHS as dynamic) + ") " +
 						binOp.Op +
 							 " (" + Stringify(binOp.RHS as dynamic) + ")";
 		}
 
-		private string Stringify(ASTFunctionCall funcCall)
+		private static string Stringify(ASTFunctionCall funcCall)
 		{
 			return "call " + funcCall.Name + "(" + funcCall.Args.Count + ")";
 		}
 
-		private string Stringify(ASTIfStatement ifStatement)
+		private static string Stringify(ASTIfStatement ifStatement)
 		{
 			string s = "if " + Stringify(ifStatement.ConditionExpr as dynamic) +
 				" " + StringifyBlock(ifStatement.IfBody);
@@ -55,23 +55,48 @@ namespace PaprikaLang
 			return s;
 		}
 
-		private string Stringify(ASTFunctionDef funcDef)
+		private static string Stringify(ASTFunctionDef funcDef)
 		{
-			string s = "func " + funcDef.Name + "(" + funcDef.Args.Count + ") -> " + funcDef.ReturnType;
+			string s = "func " + funcDef.Name + "(" + funcDef.Args.Count + ") -> " + Stringify(funcDef.ReturnType);
 			return s + " " + StringifyBlock(funcDef.Body);
 		}
 
-		private string Stringify(ASTLetDef letDef)
+		private static string Stringify(ASTLetDef letDef)
 		{
-			return "let " + letDef.Name + " " + letDef.Type + " = " + StringifyBlock(letDef.AssignmentBody);
+			return "let " + letDef.Name + " " + Stringify(letDef.Type) + " = " + StringifyBlock(letDef.AssignmentBody);
 		}
 
-		private string Stringify(ASTNode untyped)
+		private static string Stringify(ASTList list)
+		{
+			string s = Stringify(list.From as dynamic) + " to " + Stringify(list.To as dynamic);
+			if (list.Step != null)
+			{
+				s += " step " + Stringify(list.Step as dynamic);
+			}
+			return "[" + s + "]";
+		}
+
+		private static string Stringify(ASTTypeNameParts type)
+		{
+			string s = type.Name;
+			if (type.GenericArgs.Count > 0)
+			{
+				s += "<";
+				foreach (ASTTypeNameParts genericArg in type.GenericArgs)
+				{
+					s += Stringify(genericArg);
+				}
+				s += ">";
+			}
+			return s;
+		}
+
+		private static string Stringify(ASTNode untyped)
 		{
 			throw new Exception("Unhandled ASTNode: " + untyped.GetType());
 		}
 
-		private string StringifyBlock(IList<ASTNode> block)
+		private static string StringifyBlock(IList<ASTNode> block)
 		{
 			string s = "{\n";
 			foreach (ASTNode node in block)

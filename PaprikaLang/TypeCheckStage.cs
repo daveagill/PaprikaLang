@@ -15,12 +15,12 @@ namespace PaprikaLang
 
 		private TypeDetail TypeCheck(ASTString str)
 		{
-			return new TypeDetail(TypePrimitive.String);
+			return TypeDetail.String;
 		}
 
 		private TypeDetail TypeCheck(ASTNumeric numeric)
 		{
-			return new TypeDetail(TypePrimitive.Number);
+			return TypeDetail.Number;
 		}
 
 		private TypeDetail TypeCheck(ASTNamedValue namedValue)
@@ -52,7 +52,7 @@ namespace PaprikaLang
 					{
 						throw new Exception("Expected RHS type of " + TypePrimitive.Number + " but got " + RHSType + ", for operator " + binOp.Op);
 					}
-					binOp.ResultType = new TypeDetail(TypePrimitive.Number);
+					binOp.ResultType = TypeDetail.Number;
 					break;
 
 				case BinaryOps.GreaterThan:
@@ -65,7 +65,7 @@ namespace PaprikaLang
 					{
 						throw new Exception("Expected RHS type of " + TypePrimitive.Number + " but got " + RHSType + ", for operator " + binOp.Op);
 					}
-					binOp.ResultType = new TypeDetail(TypePrimitive.Boolean);
+					binOp.ResultType = TypeDetail.Boolean;
 					break;
 
 				case BinaryOps.Equals:
@@ -74,7 +74,7 @@ namespace PaprikaLang
 					{
 						throw new Exception("LHS type of " + LHSType + " does not match RHS type of " + RHSType + ", for operator " + binOp.Op);
 					}
-					binOp.ResultType = new TypeDetail(TypePrimitive.Boolean);
+					binOp.ResultType = TypeDetail.Boolean;
 					break;
 
 				case BinaryOps.StringConcat:
@@ -85,7 +85,7 @@ namespace PaprikaLang
 					{
 						throw new Exception("String concatenation only works on " + TypePrimitive.Number + " or " + TypePrimitive.String);
 					}
-					binOp.ResultType = new TypeDetail(TypePrimitive.String);
+					binOp.ResultType = TypeDetail.String;
 					break;
 
 				case BinaryOps.And:
@@ -122,7 +122,7 @@ namespace PaprikaLang
 			{
 				throw new Exception(
 					"Function '" + funcDef.Name + "' has a defined return type of " +
-					funcDef.Symbol.ReturnType + " but is attempted to return a " + blockReturnType);
+					funcDef.Symbol.ReturnType + " but is attempting to return a " + blockReturnType);
 			}
 
 			return null; // function definitions have no type
@@ -163,6 +163,23 @@ namespace PaprikaLang
 			}
 
 			return ifBlockType;
+		}
+
+		private TypeDetail TypeCheck(ASTList list)
+		{
+			TypeDetail fromType = TypeCheck(list.From as dynamic);
+			TypeDetail toType = TypeCheck(list.To as dynamic);
+			TypeDetail stepType = list.Step == null ? null : TypeCheck(list.Step as dynamic);
+
+			if (fromType.TypePrimitive != TypePrimitive.Number ||
+			    toType.TypePrimitive != TypePrimitive.Number ||
+			    stepType != null && stepType.TypePrimitive != TypePrimitive.Number)
+			{
+				throw new Exception("List literals must be comprised of " + TypePrimitive.Number +
+				                   "\n[from: " + fromType + " to: " + toType + " step: " + stepType + "]");
+			}
+
+			return TypeDetail.ListOfNumbers;
 		}
 
 		private TypeDetail TypeCheckBlock(IList<ASTNode> block)

@@ -50,6 +50,20 @@ namespace PaprikaLang
 		}
 	}
 
+	public class ASTList : ASTExpression
+	{
+		public ASTExpression From { get; }
+		public ASTExpression To { get; }
+		public ASTExpression Step { get; }
+
+		public ASTList(ASTExpression from, ASTExpression to, ASTExpression step)
+		{
+			this.From = from;
+			this.To = to;
+			this.Step = step;
+		}
+	}
+
 	public class ASTNamedValue : ASTExpression
 	{
 		public string Name { get; }
@@ -80,14 +94,26 @@ namespace PaprikaLang
 		}
 	}
 
+	public class ASTTypeNameParts
+	{
+		public string Name { get; }
+		public IList<ASTTypeNameParts> GenericArgs { get; }
+
+		public ASTTypeNameParts(string name, IList<ASTTypeNameParts> genericArgs)
+		{
+			this.Name = name;
+			this.GenericArgs = genericArgs;
+		}
+	}
+
 	public class ASTFunctionDef : ASTDeclaration
 	{
 		public class ASTParam
 		{
 			public string Name { get; }
-			public string Type { get; }
+			public ASTTypeNameParts Type { get; }
 
-			public ASTParam(string name, string type)
+			public ASTParam(string name, ASTTypeNameParts type)
 			{
 				this.Name = name;
 				this.Type = type;
@@ -96,12 +122,12 @@ namespace PaprikaLang
 
 		public string Name { get; }
 		public IList<ASTParam> Args { get; }
-		public string ReturnType { get; }
+		public ASTTypeNameParts ReturnType { get; }
 		public IList<ASTNode> Body { get; }
 
 		public FunctionSymbol Symbol { get; set; }
 
-		public ASTFunctionDef(string name, IList<ASTParam> args, IList<ASTNode> body, string returnType)
+		public ASTFunctionDef(string name, IList<ASTParam> args, IList<ASTNode> body, ASTTypeNameParts returnType)
 		{
 			this.Name = name;
 			this.Args = args;
@@ -113,12 +139,12 @@ namespace PaprikaLang
 	public class ASTLetDef : ASTDeclaration
 	{
 		public string Name { get; }
-		public string Type { get; }
+		public ASTTypeNameParts Type { get; }
 		public IList<ASTNode> AssignmentBody { get; }
 
 		public LocalSymbol ReferencedSymbol { get; set; }
 
-		public ASTLetDef(string name, string type, IList<ASTNode> assignmentBody)
+		public ASTLetDef(string name, ASTTypeNameParts type, IList<ASTNode> assignmentBody)
 		{
 			this.Name = name;
 			this.Type = type;

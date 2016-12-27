@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PaprikaLang
 {
@@ -29,6 +30,24 @@ namespace PaprikaLang
 			return new ASTModule(funcDefs);
 		}
 
+		private ASTTypeNameParts ParseTypeNameParts()
+		{
+			lexer.Expect(TokenType.Identifier);
+			string typename = lexer.AcceptedValue;
+
+			// look for generic arguments
+			IList<ASTTypeNameParts> genericArgs = new List<ASTTypeNameParts>();
+			if (lexer.AcceptChar('<'))
+			{
+				while (!lexer.AcceptChar('>'))
+				{
+					genericArgs.Add(ParseTypeNameParts());
+				}
+			}
+
+			return new ASTTypeNameParts(typename, genericArgs);
+		}
+
 		private ASTExpression ParseExpression()
 		{
 			return ParseExpressionSequence(ParseOperand(), -1);
@@ -51,6 +70,10 @@ namespace PaprikaLang
 			else if (lexer.IncomingToken == TokenType.If)
 			{
 				return ParseIf();
+			}
+			else if (lexer.IsIncomingChar('['))
+			{
+				return ParseListLiteral();
 			}
 			else if (lexer.AcceptChar('('))
 			{
@@ -165,8 +188,7 @@ namespace PaprikaLang
 				string paramName = lexer.AcceptedValue;
 
 				// expect parameter type
-				lexer.Expect(TokenType.Identifier);
-				string paramType = lexer.AcceptedValue;
+				ASTTypeNameParts paramType = ParseTypeNameParts();
 
 				args.Add(new ASTFunctionDef.ASTParam(paramName, paramType));
 			}
@@ -174,8 +196,7 @@ namespace PaprikaLang
 			// parse arrow (->) then return-type
 			lexer.ExpectChar('-');
 			lexer.ExpectChar('>');
-			lexer.Expect(TokenType.Identifier);
-			string returnType = lexer.AcceptedValue;
+			ASTTypeNameParts returnType = ParseTypeNameParts();
 
 			IList<ASTNode> functionBody = ParseBlock();
 
@@ -186,13 +207,12 @@ namespace PaprikaLang
 		{
 			lexer.Expect(TokenType.Let);
 
-			// expect constant name
+			// expect a name
 			lexer.Expect(TokenType.Identifier);
 			string name = lexer.AcceptedValue;
 
-			// expect constant type
-			lexer.Expect(TokenType.Identifier);
-			string type = lexer.AcceptedValue;
+			// expect a type
+			ASTTypeNameParts type = ParseTypeNameParts();
 
 			// expect assignment symbol
 			lexer.ExpectChar('=');
@@ -254,6 +274,36 @@ namespace PaprikaLang
 			}
 
 			return new ASTIfStatement(conditionExpr, ifBody, elseBody);
+		}
+
+		private ASTList ParseListLiteral()
+		{
+			lexer.ExpectChar('[');
+
+			ASTExpression from = ParseExpression();
+
+			// 'to' is a context sensitive keyword so parse it as an identifier
+			if (lexer.IncomingValue != "to")
+			{
+				throw new Exception("Expected 'to' keyword in list literal expression, but got: " + lexer.AcceptedValue);
+			}
+			lexer.Expect(TokenType.Identifier);
+
+			ASTExpression to = ParseExpression();
+
+			// parse an optional step
+			ASTExpression step = null;
+
+			// 'step' is a context sensitive keyword so parse it as an identifier
+			if (lexer.IncomingValue == "step")
+			{
+				lexer.Expect(TokenType.Identifier);
+				step = ParseExpression();
+			}
+
+			lexer.ExpectChar(']');
+
+			return new ASTList(from, to, step);
 		}
 
 		public static ParseResult Parse(string input)

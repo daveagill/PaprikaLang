@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaprikaLang", "PaprikaLang\PaprikaLang.csproj", "{74C4CD36-CC30-42C3-9473-02D4B841ABBE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaprikaLib", "PaprikaLib\PaprikaLib.csproj", "{1560C3C0-BB16-449C-A027-2CBA32EA31BA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -13,5 +15,9 @@ Global
 		{74C4CD36-CC30-42C3-9473-02D4B841ABBE}.Debug|x86.Build.0 = Debug|x86
 		{74C4CD36-CC30-42C3-9473-02D4B841ABBE}.Release|x86.ActiveCfg = Release|x86
 		{74C4CD36-CC30-42C3-9473-02D4B841ABBE}.Release|x86.Build.0 = Release|x86
+		{1560C3C0-BB16-449C-A027-2CBA32EA31BA}.Debug|x86.ActiveCfg = DeployToCompilerDebug|Any CPU
+		{1560C3C0-BB16-449C-A027-2CBA32EA31BA}.Debug|x86.Build.0 = DeployToCompilerDebug|Any CPU
+		{1560C3C0-BB16-449C-A027-2CBA32EA31BA}.Release|x86.ActiveCfg = Release|Any CPU
+		{1560C3C0-BB16-449C-A027-2CBA32EA31BA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

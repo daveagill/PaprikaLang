@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace PaprikaLang
@@ -9,39 +10,84 @@ namespace PaprikaLang
 		Number,
 		String,
 		Boolean,
+		List,
 		Func,
 		UserDefined,
+		ConcreteGeneric,
 		Unknown
 	}
 
 
 	public class TypeDetail
 	{
-		public string Name { get; }
+		public static readonly TypeDetail Number = new TypeDetail("number", TypePrimitive.Number);
+		public static readonly TypeDetail String = new TypeDetail("string", TypePrimitive.String);
+		public static readonly TypeDetail Boolean = new TypeDetail("boolean", TypePrimitive.Boolean);
+		public static readonly TypeDetail UnboundList = new TypeDetail("seq", TypePrimitive.List, 1);
+		public static readonly TypeDetail ListOfNumbers = new TypeDetail(UnboundList, new TypeDetail[] { Number });
+		public static readonly TypeDetail Func = new TypeDetail("func", TypePrimitive.Func);
+		public static readonly TypeDetail Unknown = new TypeDetail("unknown", TypePrimitive.Unknown);
+
+		public string SimpleName { get; }
 		public TypePrimitive TypePrimitive { get; }
 		public DataTypeSymbol UserDefinedSymbol { get; }
 
-		public TypeDetail(TypePrimitive typePrimitive)
+		public int UnboundArgCount { get; }
+		public bool IsUnbound
 		{
-			Name = null;
+			get
+			{
+				return UnboundArgCount > 0;
+			}
+		}
+
+		public TypeDetail GenericType { get; }
+		public IList<TypeDetail> GenericParams { get; }
+		public bool IsBound
+		{
+			get
+			{
+				return GenericType != null;
+			}
+		}
+
+		private TypeDetail(string simpleName, TypePrimitive typePrimitive, int unboundArgCount = 0)
+		{
+			SimpleName = simpleName;
 			TypePrimitive = typePrimitive;
+			UnboundArgCount = unboundArgCount;
+			GenericType = null;
+			GenericParams = new List<TypeDetail>();
+		}
+
+		public TypeDetail(TypeDetail unboundGenericType, IList<TypeDetail> genericParams)
+		{
+			if (unboundGenericType.UnboundArgCount != genericParams.Count)
+			{
+				throw new InvalidOperationException();
+			}
+
+			SimpleName = unboundGenericType.SimpleName;
+			TypePrimitive = TypePrimitive.ConcreteGeneric;
+			GenericType = unboundGenericType;
+			GenericParams = genericParams;
 		}
 
 		public TypeDetail(DataTypeSymbol userDefinedTypeSymbol)
 		{
-			Name = userDefinedTypeSymbol.Name;
+			SimpleName = userDefinedTypeSymbol.Name;
 			TypePrimitive = TypePrimitive.UserDefined;
 			UserDefinedSymbol = userDefinedTypeSymbol;
 		}
 
 		public override string ToString()
 		{
-			return string.Format("[TypeDetail: Name={0}, TypePrimitive={1}, UserDefinedSymbol={2}]", Name, TypePrimitive, UserDefinedSymbol);
+			return string.Format("[TypeDetail: SimpleName={0}, TypePrimitive={1}, UserDefinedSymbol={2}, GenericType={3}]", SimpleName, TypePrimitive, UserDefinedSymbol, GenericType);
 		}
 
 		public override int GetHashCode()
 		{
-			return Name.GetHashCode();
+			return SimpleName.GetHashCode();
 		}
 
 		public override bool Equals(object obj)
@@ -51,7 +97,11 @@ namespace PaprikaLang
 
 		public static bool operator ==(TypeDetail lhs, TypeDetail rhs)
 		{
-			return lhs.Name == rhs.Name && lhs.TypePrimitive == rhs.TypePrimitive && lhs.UserDefinedSymbol == rhs.UserDefinedSymbol;
+			return object.ReferenceEquals(lhs, rhs) ||
+				         !object.ReferenceEquals(lhs, null) && !object.ReferenceEquals(rhs, null) &&
+				         lhs.TypePrimitive == rhs.TypePrimitive &&
+				         lhs.UserDefinedSymbol == rhs.UserDefinedSymbol &&
+				         lhs.GenericParams.SequenceEqual(rhs.GenericParams);
 		}
 
 		public static bool operator !=(TypeDetail lhs, TypeDetail rhs)
@@ -95,7 +145,7 @@ namespace PaprikaLang
 			Params = new List<ParamSymbol>();
 			SymbolTable = symbolTable;
 			ReturnType = returnType;
-			Type = new TypeDetail(TypePrimitive.Func); // TODO do function types properly
+			Type = TypeDetail.Func; // TODO do function types properly
 		}
 	}
 
@@ -126,11 +176,9 @@ namespace PaprikaLang
 
 	public class SymbolTable
 	{
-		private static TypeDetail numberType = new TypeDetail(TypePrimitive.Number);
-		private static TypeDetail stringType = new TypeDetail(TypePrimitive.String);
-
 		private SymbolTable parent;
 		private IDictionary<string, ISymbol> symbols = new Dictionary<string, ISymbol>();
+		private IDictionary<string, TypeDetail> types = new Dictionary<string, TypeDetail>();
 
 		public SymbolTable(SymbolTable parentSymbols)
 		{
@@ -140,6 +188,11 @@ namespace PaprikaLang
 		public void Add(ISymbol symbol)
 		{
 			symbols.Add(symbol.Name, symbol);
+		}
+
+		public void AddType(TypeDetail type)
+		{
+			types.Add(type.SimpleName, type);
 		}
 
 		public ISymbol ResolveSymbol(string name)
@@ -172,16 +225,20 @@ namespace PaprikaLang
 
 		public TypeDetail ResolveType(string typename)
 		{
-			if (typename == "number")
+			TypeDetail type = null;
+			types.TryGetValue(typename, out type);
+
+			if (type == null && parent != null)
 			{
-				return numberType;
-			}
-			else if (typename == "string")
-			{
-				return stringType;
+				type = parent.ResolveType(typename);
 			}
 
-			throw new Exception("Unable to resolve type name: " + typename);
+			if (type == null)
+			{
+				throw new Exception("Unable to resolve type name: " + typename);
+			}
+
+			return type;
 		}
 	}
 

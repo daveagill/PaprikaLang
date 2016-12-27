@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Linq;
 using System.Collections.Generic;
+using PaprikaLib;
 
 namespace PaprikaLang
 {
@@ -20,7 +21,16 @@ namespace PaprikaLang
 				return typeof(string);
 			}
 
-			throw new Exception("TypeInfo '" + typeDetail.Name + "' is currently not supported for bytecode emission");
+			if (typeDetail.IsBound)
+			{
+				if (typeDetail.GenericType == TypeDetail.UnboundList)
+				{
+					Type elemType = MapTypeInfo(typeDetail.GenericParams.First());
+					return typeof(IList<>).MakeGenericType(elemType);
+				}
+			}
+
+			throw new Exception("TypeInfo '" + typeDetail + "' is currently not supported for bytecode emission");
 		}
 	}
 
@@ -130,7 +140,9 @@ namespace PaprikaLang
 			assemblyBuilder.SetEntryPoint(entryMethod);
 			var ilGen = entryMethod.GetILGenerator();
 			ilGen.Emit(OpCodes.Call, mainMethod);
-			ilGen.Emit(OpCodes.Call, typeof(System.Console).GetMethod("WriteLine", new System.Type[] { mainMethod.ReturnType }));
+			ilGen.Emit(OpCodes.Box, mainMethod.ReturnType);
+			ilGen.Emit(OpCodes.Call, typeof(ListOps).GetMethod("ToStringRepresentation", new System.Type[] { typeof(object) }));
+			ilGen.Emit(OpCodes.Call, typeof(System.Console).GetMethod("WriteLine", new System.Type[] { typeof(object) }));
 			ilGen.Emit(OpCodes.Ret);
 
 			return loweredSymbols;
@@ -212,6 +224,21 @@ namespace PaprikaLang
 		private void Gen(ASTString str, ILGenerator ilGen)
 		{
 			ilGen.Emit(OpCodes.Ldstr, str.Value);
+		}
+
+		private void Gen(ASTList list, ILGenerator ilGen)
+		{
+			Gen(list.From as dynamic, ilGen);
+			Gen(list.To as dynamic, ilGen);
+			if (list.Step != null)
+			{
+				Gen(list.Step as dynamic, ilGen);
+			}
+			else
+			{
+				ilGen.Emit(OpCodes.Ldc_R8, 1d);
+			}
+			ilGen.Emit(OpCodes.Call, typeof(ListOps).GetMethod("GenerateList"));
 		}
 
 		private void Gen(ASTNamedValue namedValue, ILGenerator ilGen)
