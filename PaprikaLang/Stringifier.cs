@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PaprikaLang
 {
@@ -17,17 +18,24 @@ namespace PaprikaLang
 
 		private static string Stringify(ASTBlock block)
 		{
-			string s = "{\n";
+			bool isFirst = true;
+			string s = "";
 			foreach (ASTNode node in block.Body)
 			{
-				s += Stringify(node as dynamic) + '\n';
+				if (!isFirst)
+				{
+					s += "\n";
+				}
+				s += Stringify(node as dynamic);
+				isFirst = false;
 			}
-			return s + "}";
+
+			return block.Body.Count == 1 ? "{ " + s + " }" : "{\n" + s + "\n}";
 		}
 
 		private static string Stringify(ASTString str)
 		{
-			return "'" + str.Value + "'";
+			return "\"" + str.Value + "\"";
 		}
 
 		private static string Stringify(ASTNumeric numeric)
@@ -67,13 +75,18 @@ namespace PaprikaLang
 
 		private static string Stringify(ASTFunctionDef funcDef)
 		{
-			string s = "func " + funcDef.Name + "(" + funcDef.Args.Count + ") -> " + Stringify(funcDef.ReturnType);
+			string s = "func " + funcDef.Name + "(" + funcDef.Args.Count + " args) -> " + Stringify(funcDef.ReturnType);
 			return s + " " + Stringify(funcDef.Body);
 		}
 
 		private static string Stringify(ASTLetDef letDef)
 		{
-			return "let " + letDef.Name + " " + Stringify(letDef.Type) + " = " + Stringify(letDef.AssignmentBody);
+			string s = "let " + letDef.Name + " " + Stringify(letDef.Type) + " = " + Stringify(letDef.AssignmentBodies.First());
+			foreach (ASTBlock block in letDef.AssignmentBodies.Skip(1))
+			{
+				s += " then " + Stringify(block);
+			}
+			return s;
 		}
 
 		private static string Stringify(ASTList list)

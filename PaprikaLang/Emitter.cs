@@ -231,8 +231,11 @@ namespace PaprikaLang
 
 			loweredSymbols.AddLocal(letDef.ReferencedSymbol, local);
 
-			Gen(letDef.AssignmentBody, ilGen);
-			ilGen.Emit(OpCodes.Stloc, local);
+			foreach (ASTBlock block in letDef.AssignmentBodies)
+			{
+				Gen(block, ilGen);
+				ilGen.Emit(OpCodes.Stloc, local);
+			}
 		}
 
 		private void Gen(ASTNumeric numeric, ILGenerator ilGen)

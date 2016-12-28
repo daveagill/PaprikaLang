@@ -217,19 +217,27 @@ namespace PaprikaLang
 			// expect assignment symbol
 			lexer.ExpectChar('=');
 
-			// the body of the assignment can either be a simple operand or a whole block
-			ASTBlock assignmentBody;
-			if (lexer.IsIncomingChar('{'))
+			// multiple assignments can take place, separated by the 'then' keyword
+			IList<ASTBlock> assignmentBodies = new List<ASTBlock>();
+			do
 			{
-				assignmentBody = ParseBlock();
-			}
-			else
-			{
-				assignmentBody = new ASTBlock(
-					new ASTNode[] { ParseOperand() });
-			}
+				// the body of the assignment can either be a simple expression or a whole block
+				ASTBlock assignmentBody;
+				if (lexer.IsIncomingChar('{'))
+				{
+					assignmentBody = ParseBlock();
+				}
+				else
+				{
+					assignmentBody = new ASTBlock(
+						new ASTNode[] { ParseExpression() });
+				}
 
-			return new ASTLetDef(name, type, assignmentBody);
+				assignmentBodies.Add(assignmentBody);
+			}
+			while (lexer.Accept(TokenType.Then)); // keep going while there is another assignment
+
+			return new ASTLetDef(name, type, assignmentBodies);
 		}
 
 		private ASTExpression ParseNamedValueOrFunctionCall()

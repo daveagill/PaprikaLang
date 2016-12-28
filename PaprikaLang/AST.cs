@@ -150,15 +150,15 @@ namespace PaprikaLang
 	{
 		public string Name { get; }
 		public ASTTypeNameParts Type { get; }
-		public ASTBlock AssignmentBody { get; }
+		public IList<ASTBlock> AssignmentBodies { get; }
 
 		public LocalSymbol ReferencedSymbol { get; set; }
 
-		public ASTLetDef(string name, ASTTypeNameParts type, ASTBlock assignmentBody)
+		public ASTLetDef(string name, ASTTypeNameParts type, IList<ASTBlock> assignmentBodies)
 		{
 			this.Name = name;
 			this.Type = type;
-			this.AssignmentBody = assignmentBody;
+			this.AssignmentBodies = assignmentBodies;
 		}
 	}
 

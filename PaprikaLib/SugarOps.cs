@@ -31,14 +31,14 @@ namespace PaprikaLib
 
 		public static string ToStringRepresentation(object o)
 		{
-			IEnumerable enumerable = o as IEnumerable;
-			if (enumerable != null)
+			ICollection collection = o as ICollection;
+			if (collection != null)
 			{
 				StringBuilder sb = new StringBuilder();
 				sb.Append('[');
 
 				bool isFirst = true;
-				foreach (var elem in enumerable)
+				foreach (var elem in collection)
 				{
 					if (!isFirst)
 					{

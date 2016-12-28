@@ -140,13 +140,16 @@ namespace PaprikaLang
 
 		private TypeDetail TypeCheck(ASTLetDef letDef)
 		{
-			TypeDetail RHSType = TypeCheck(letDef.AssignmentBody);
-
-			if (letDef.ReferencedSymbol.Type != RHSType)
+			foreach (ASTBlock block in letDef.AssignmentBodies)
 			{
-				throw new Exception("Let definition of " + letDef.Name + " is defined with a type of " +
-				                    letDef.ReferencedSymbol.Type + " but is attempting to assign a " +
-				                    "type of " + RHSType);
+				TypeDetail RHSType = TypeCheck(block);
+
+				if (letDef.ReferencedSymbol.Type != RHSType)
+				{
+					throw new Exception("Let definition of " + letDef.Name + " is defined with a type of " +
+										letDef.ReferencedSymbol.Type + " but is attempting to assign a " +
+										"type of " + RHSType);
+				}
 			}
 
 			return null; // let definitions have no type

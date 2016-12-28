@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PaprikaLang
 {
@@ -62,12 +63,22 @@ namespace PaprikaLang
 
 		private void Bind(ASTLetDef letDef)
 		{
-			BindScope(letDef.AssignmentBody.Body, new SymbolTable(symTab));
+			// the first assignment body is not allowed to reference the LHS so evaluate it first
+			BindScope(letDef.AssignmentBodies.First().Body, new SymbolTable(symTab));
 
+			// now add the LHS definition to the symbol table
 			TypeDetail type = ResolveConcreteType(letDef.Type);
 			letDef.ReferencedSymbol = new LocalSymbol(letDef.Name, type);
-
 			symTab.Add(letDef.ReferencedSymbol);
+
+			// all subsequent assignment bodies can now access the LHS
+			if (letDef.AssignmentBodies.Count > 1)
+			{
+				foreach (ASTBlock block in letDef.AssignmentBodies.Skip(1))
+				{
+					BindScope(block.Body, new SymbolTable(symTab));
+				}
+			}
 		}
 
 		private void Bind(ASTIfStatement ifStatement)

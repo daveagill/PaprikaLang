@@ -1,9 +1,7 @@
-﻿func foo(upper number) -> seq<number>
+﻿func Main() -> string
 {
-	[upper to 0 step 2.7]
-}
-
-func Main() -> seq<number>
-{
-	foo(15)
+	let x number = 5 then x*x
+	let y number = 1
+	let z number = x + y
+	z .. " <- this"
 }
