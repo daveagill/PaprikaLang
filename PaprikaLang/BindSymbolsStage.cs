@@ -18,6 +18,11 @@ namespace PaprikaLang
 			BindScope(module.FunctionDefs, new SymbolTable(symTab));
 		}
 
+		public void Bind(ASTBlock block)
+		{
+			BindScope(block.Body, new SymbolTable(symTab));
+		}
+
 		private void Bind(ASTNamedValue namedValue)
 		{
 			namedValue.ReferencedSymbol = symTab.ResolveSymbol(namedValue.Name);
@@ -64,7 +69,7 @@ namespace PaprikaLang
 		private void Bind(ASTLetDef letDef)
 		{
 			// the first assignment body is not allowed to reference the LHS so evaluate it first
-			BindScope(letDef.AssignmentBodies.First().Body, new SymbolTable(symTab));
+			Bind(letDef.AssignmentBodies.First() as dynamic);
 
 			// now add the LHS definition to the symbol table
 			TypeDetail type = ResolveConcreteType(letDef.Type);
@@ -74,9 +79,9 @@ namespace PaprikaLang
 			// all subsequent assignment bodies can now access the LHS
 			if (letDef.AssignmentBodies.Count > 1)
 			{
-				foreach (ASTBlock block in letDef.AssignmentBodies.Skip(1))
+				foreach (ASTExpression assignmentBody in letDef.AssignmentBodies.Skip(1))
 				{
-					BindScope(block.Body, new SymbolTable(symTab));
+					Bind(assignmentBody as dynamic);
 				}
 			}
 		}

@@ -1,7 +1,6 @@
-﻿func Main() -> string
+﻿func Main() -> number
 {
-	let x number = 5 then x*x
-	let y number = 1
-	let z number = x + y
-	z .. " <- this"
+	let y number = 6
+	let x number = 5 then if y > 5 { x*x }
+	x
 }

@@ -140,9 +140,9 @@ namespace PaprikaLang
 
 		private TypeDetail TypeCheck(ASTLetDef letDef)
 		{
-			foreach (ASTBlock block in letDef.AssignmentBodies)
+			foreach (ASTExpression assignmentBody in letDef.AssignmentBodies)
 			{
-				TypeDetail RHSType = TypeCheck(block);
+				TypeDetail RHSType = TypeCheck(assignmentBody as dynamic);
 
 				if (letDef.ReferencedSymbol.Type != RHSType)
 				{

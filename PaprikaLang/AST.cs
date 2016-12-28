@@ -150,11 +150,11 @@ namespace PaprikaLang
 	{
 		public string Name { get; }
 		public ASTTypeNameParts Type { get; }
-		public IList<ASTBlock> AssignmentBodies { get; }
+		public IList<ASTExpression> AssignmentBodies { get; }
 
 		public LocalSymbol ReferencedSymbol { get; set; }
 
-		public ASTLetDef(string name, ASTTypeNameParts type, IList<ASTBlock> assignmentBodies)
+		public ASTLetDef(string name, ASTTypeNameParts type, IList<ASTExpression> assignmentBodies)
 		{
 			this.Name = name;
 			this.Type = type;
@@ -165,11 +165,11 @@ namespace PaprikaLang
 	public class ASTFunctionCall : ASTExpression
 	{
 		public string Name { get; }
-		public IList<ASTNode> Args { get; }
+		public IList<ASTExpression> Args { get; }
 
 		public FunctionSymbol ReferencedSymbol { get; set; }
 
-		public ASTFunctionCall(string name, IList<ASTNode> args)
+		public ASTFunctionCall(string name, IList<ASTExpression> args)
 		{
 			this.Name = name;
 			this.Args = args;
@@ -178,11 +178,11 @@ namespace PaprikaLang
 
 	public class ASTIfStatement : ASTExpression
 	{
-		public ASTNode ConditionExpr;
+		public ASTExpression ConditionExpr;
 		public ASTBlock IfBody { get; }
 		public ASTBlock ElseBody { get; }
 
-		public ASTIfStatement(ASTNode conditionExpr, ASTBlock ifBody, ASTBlock elseBody)
+		public ASTIfStatement(ASTExpression conditionExpr, ASTBlock ifBody, ASTBlock elseBody)
 		{
 			this.ConditionExpr = conditionExpr;
 			this.IfBody = ifBody;

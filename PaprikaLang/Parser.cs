@@ -48,43 +48,6 @@ namespace PaprikaLang
 			return new ASTTypeNameParts(typename, genericArgs);
 		}
 
-		private ASTExpression ParseExpression()
-		{
-			return ParseExpressionSequence(ParseOperand(), -1);
-		}
-
-		private ASTExpression ParseOperand()
-		{
-			if (lexer.Accept(TokenType.NumericLiteral))
-			{
-				return new ASTNumeric(Double.Parse(lexer.AcceptedValue));
-			}
-			else if (lexer.Accept(TokenType.StringLiteral))
-			{
-				return new ASTString(lexer.AcceptedValue);
-			}
-			else if (lexer.IncomingToken == TokenType.Identifier)
-			{
-				return ParseNamedValueOrFunctionCall();
-			}
-			else if (lexer.IncomingToken == TokenType.If)
-			{
-				return ParseIf();
-			}
-			else if (lexer.IsIncomingChar('['))
-			{
-				return ParseListLiteral();
-			}
-			else if (lexer.AcceptChar('('))
-			{
-				ASTExpression exprSeq = ParseExpression();
-				lexer.ExpectChar(')');
-				return exprSeq;
-			}
-
-			throw new Exception("Unable to parse operand at: " + lexer.IncomingToken + ", " + lexer.IncomingValue);
-		}
-
 		private ASTExpression ParseExpressionSequence(ASTExpression LHS, int minPrecedenceThreshold)
 		{
 			// keep going while there are still operators in the sequence
@@ -131,6 +94,55 @@ namespace PaprikaLang
 
 			// (sub)expression is fully parsed to the LHS
 			return LHS;
+		}
+
+		private ASTExpression ParseExpression()
+		{
+			return ParseExpressionSequence(ParseOperand(), -1);
+		}
+
+		// A 'then expression' is an extended form of expression
+		private ASTExpression ParseAnExtendedThenExpression()
+		{
+			if (lexer.IncomingToken == TokenType.If) // possible conditional assignment
+			{
+				return ParseIf();
+			}
+
+			// must be a standard-form expression
+			return ParseExpression();
+		}
+
+		private ASTExpression ParseOperand()
+		{
+			if (lexer.Accept(TokenType.NumericLiteral))
+			{
+				return new ASTNumeric(Double.Parse(lexer.AcceptedValue));
+			}
+			else if (lexer.Accept(TokenType.StringLiteral))
+			{
+				return new ASTString(lexer.AcceptedValue);
+			}
+			else if (lexer.IncomingToken == TokenType.Identifier)
+			{
+				return ParseNamedValueOrFunctionCall();
+			}
+			else if (lexer.IncomingToken == TokenType.If)
+			{
+				return ParseIf();
+			}
+			else if (lexer.IsIncomingChar('['))
+			{
+				return ParseListLiteral();
+			}
+			else if (lexer.AcceptChar('('))
+			{
+				ASTExpression exprSeq = ParseExpression();
+				lexer.ExpectChar(')');
+				return exprSeq;
+			}
+
+			throw new Exception("Unable to parse operand at: " + lexer.IncomingToken + ", " + lexer.IncomingValue);
 		}
 
 		private ASTBlock ParseBlock()
@@ -218,19 +230,25 @@ namespace PaprikaLang
 			lexer.ExpectChar('=');
 
 			// multiple assignments can take place, separated by the 'then' keyword
-			IList<ASTBlock> assignmentBodies = new List<ASTBlock>();
+			IList<ASTExpression> assignmentBodies = new List<ASTExpression>();
 			do
 			{
-				// the body of the assignment can either be a simple expression or a whole block
-				ASTBlock assignmentBody;
-				if (lexer.IsIncomingChar('{'))
+				// the body of the assignment can either be a singular expression or a block
+				ASTExpression assignmentBody = null;
+				if (lexer.IsIncomingChar('{')) // blocks work for both first and subsequent assignment bodies
 				{
 					assignmentBody = ParseBlock();
 				}
-				else
+				else // must be a singular expression form...
 				{
-					assignmentBody = new ASTBlock(
-						new ASTNode[] { ParseExpression() });
+					if (assignmentBodies.Count == 0) // the first assignment can only be a regular expression
+					{
+						assignmentBody = ParseExpression();
+					}
+					else // subsequent assignments could be of the extended variety
+					{
+						assignmentBody = ParseAnExtendedThenExpression();
+					}
 				}
 
 				assignmentBodies.Add(assignmentBody);
@@ -255,7 +273,7 @@ namespace PaprikaLang
 
 			// otherwise it's a function call, so parse the argument list
 
-			IList<ASTNode> args = new List<ASTNode>();
+			IList<ASTExpression> args = new List<ASTExpression>();
 			while (!lexer.AcceptChar(')'))
 			{
 				// expect a comma, unless it's the first arg
@@ -273,7 +291,7 @@ namespace PaprikaLang
 		private ASTIfStatement ParseIf()
 		{
 			lexer.Expect(TokenType.If);
-			ASTNode conditionExpr = ParseExpression();
+			ASTExpression conditionExpr = ParseExpression();
 			ASTBlock ifBody = ParseBlock();
 
 			ASTBlock elseBody = null;

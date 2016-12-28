@@ -81,10 +81,10 @@ namespace PaprikaLang
 
 		private static string Stringify(ASTLetDef letDef)
 		{
-			string s = "let " + letDef.Name + " " + Stringify(letDef.Type) + " = " + Stringify(letDef.AssignmentBodies.First());
-			foreach (ASTBlock block in letDef.AssignmentBodies.Skip(1))
+			string s = "let " + letDef.Name + " " + Stringify(letDef.Type) + " = " + Stringify(letDef.AssignmentBodies.First() as dynamic);
+			foreach (ASTExpression assignmentBody in letDef.AssignmentBodies.Skip(1))
 			{
-				s += " then " + Stringify(block);
+				s += " then " + Stringify(assignmentBody as dynamic);
 			}
 			return s;
 		}

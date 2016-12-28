@@ -231,10 +231,23 @@ namespace PaprikaLang
 
 			loweredSymbols.AddLocal(letDef.ReferencedSymbol, local);
 
-			foreach (ASTBlock block in letDef.AssignmentBodies)
+			foreach (ASTExpression assignmentBody in letDef.AssignmentBodies)
 			{
-				Gen(block, ilGen);
-				ilGen.Emit(OpCodes.Stloc, local);
+				// determine if this is an extended-form assignment 
+				bool isConditionalAssignment = assignmentBody is ASTIfStatement && ((ASTIfStatement)assignmentBody).ElseBody == null;
+				bool isExtendedFormAssignment =
+					isConditionalAssignment;
+
+				// extended-form assignments are 'self assigning', so they handle the Stloc opcode themselves
+				if (isExtendedFormAssignment)
+				{
+					GenSelfAssignmentToLocal(assignmentBody as dynamic, local, ilGen);
+				}
+				else // we must emit Stloc ourselves
+				{
+					Gen(assignmentBody as dynamic, ilGen);
+					ilGen.Emit(OpCodes.Stloc, local);
+				}
 			}
 		}
 
@@ -393,6 +406,23 @@ namespace PaprikaLang
 				Gen(ifStatement.ElseBody, ilGen);
 				ilGen.MarkLabel(doneLabel);
 			}
+		}
+
+		private void GenSelfAssignmentToLocal(ASTIfStatement conditionalAssignment, LocalBuilder local, ILGenerator ilGen)
+		{
+			// sanity checking
+			if (conditionalAssignment.ElseBody != null)
+			{
+				throw new InvalidOperationException("Unexpected else-block on conditional assignment");
+			}
+
+			Gen(conditionalAssignment.ConditionExpr as dynamic, ilGen);
+
+			Label doneLabel = ilGen.DefineLabel();
+			ilGen.Emit(OpCodes.Brfalse, doneLabel);
+			Gen(conditionalAssignment.IfBody, ilGen);
+			ilGen.Emit(OpCodes.Stloc, local); // conditionally assign to the local
+			ilGen.MarkLabel(doneLabel);
 		}
 	}
 }
