@@ -89,6 +89,14 @@ namespace PaprikaLang
 			return s;
 		}
 
+		private static string Stringify(ASTForeachAssignment foreachAssignment)
+		{
+			return "foreach " +
+				foreachAssignment.ElementName + " " + Stringify(foreachAssignment.ElementType) +
+				" in " + Stringify(foreachAssignment.Range as dynamic) +
+				" " + Stringify(foreachAssignment.Body);
+		}
+
 		private static string Stringify(ASTList list)
 		{
 			string s = Stringify(list.From as dynamic) + " to " + Stringify(list.To as dynamic);

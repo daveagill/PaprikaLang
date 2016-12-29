@@ -1,13 +1,7 @@
-﻿func Pow(x number, power number) -> number
+﻿func Pow(base number, exponent number) -> number
 {
-	if power == 0
-	{
-		1
-	}
-	else
-	{
-		x * Pow(x, power - 1)
-	}
+	let result number = 1 then foreach i number in [0 to exponent] { result * base }
+	result
 }
 
 func Main() -> number

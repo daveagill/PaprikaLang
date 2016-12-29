@@ -189,4 +189,22 @@ namespace PaprikaLang
 			this.ElseBody = elseBody;
 		}
 	}
+
+	public class ASTForeachAssignment : ASTExpression
+	{
+		public string ElementName { get; }
+		public ASTTypeNameParts ElementType { get; }
+		public ASTExpression Range { get; }
+		public ASTBlock Body { get; }
+
+		public LocalSymbol ReferencedSymbol { get; set; }
+
+		public ASTForeachAssignment(string elementName, ASTTypeNameParts elementType, ASTExpression range, ASTBlock body)
+		{
+			this.ElementName = elementName;
+			this.ElementType = elementType;
+			this.Range = range;
+			this.Body = body;
+		}
+	}
 }

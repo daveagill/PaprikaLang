@@ -108,6 +108,10 @@ namespace PaprikaLang
 			{
 				return ParseIf();
 			}
+			else if (lexer.IncomingToken == TokenType.Foreach) // loop/repeating assignment
+			{
+				return ParseForeachAssignment();
+			}
 
 			// must be a standard-form expression
 			return ParseExpression();
@@ -301,6 +305,28 @@ namespace PaprikaLang
 			}
 
 			return new ASTIfStatement(conditionExpr, ifBody, elseBody);
+		}
+
+		private ASTForeachAssignment ParseForeachAssignment()
+		{
+			lexer.Expect(TokenType.Foreach);
+
+			// expect a name for the element var
+			lexer.Expect(TokenType.Identifier);
+			string elementName = lexer.AcceptedValue;
+
+			// expect a type for the element var
+			ASTTypeNameParts elementType = ParseTypeNameParts();
+
+			lexer.Expect(TokenType.In);
+
+			// expect a range to iterate over
+			ASTExpression range = ParseExpression();
+
+			// expect a body
+			ASTBlock body = ParseBlock();
+
+			return new ASTForeachAssignment(elementName, elementType, range, body);
 		}
 
 		private ASTList ParseListLiteral()

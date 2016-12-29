@@ -2,11 +2,11 @@
 {
 	if x == 5
 	{
-		"It's five! (◕‿◕)"
+		"It's five! :D"
 	}
 	else
 	{
-		x .. " is not five! (ಠ_ಠ)"
+		x .. " is not five! :/"
 	}
 }
 

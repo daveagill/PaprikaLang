@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PaprikaLang
 {
@@ -176,6 +177,23 @@ namespace PaprikaLang
 			}
 
 			return ifBlockType;
+		}
+
+		private TypeDetail TypeCheck(ASTForeachAssignment foreachAssignment)
+		{
+			TypeDetail rangeType = TypeCheck(foreachAssignment.Range as dynamic);
+
+			if (rangeType.GenericType != TypeDetail.UnboundList)
+			{
+				throw new Exception("Range type of foreach must be a list type, not: " + rangeType);
+			}
+			if (foreachAssignment.ReferencedSymbol.Type != rangeType.GenericParams.First())
+			{
+				throw new Exception("Element type of foreach " + foreachAssignment.ReferencedSymbol.Type +
+				                   " must match the range type of " + rangeType);
+			}
+
+			return TypeCheck(foreachAssignment.Body);
 		}
 
 		private TypeDetail TypeCheck(ASTList list)

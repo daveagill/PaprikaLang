@@ -1,6 +1,10 @@
-﻿func Main() -> number
+﻿func Pow(base number, exponent number) -> number
 {
-	let y number = 6
-	let x number = 5 then if y > 5 { x*x }
-	x
+	let result number = 1 then foreach i number in [0 to exponent] { result * base }
+	result
+}
+
+func Main() -> number
+{
+	Pow(2, 10)
 }

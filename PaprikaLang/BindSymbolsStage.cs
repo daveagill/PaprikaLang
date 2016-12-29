@@ -100,6 +100,17 @@ namespace PaprikaLang
 			}
 		}
 
+		private void Bind(ASTForeachAssignment foreachAssignment)
+		{
+			Bind(foreachAssignment.Range as dynamic);
+
+			TypeDetail elementType = ResolveConcreteType(foreachAssignment.ElementType);
+			foreachAssignment.ReferencedSymbol = new LocalSymbol(foreachAssignment.ElementName, elementType);
+			symTab.Add(foreachAssignment.ReferencedSymbol);
+
+			Bind(foreachAssignment.Body);
+		}
+
 		private void Bind(ASTList list)
 		{
 			Bind(list.From as dynamic);

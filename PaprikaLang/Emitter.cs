@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using PaprikaLib;
 
@@ -233,21 +234,7 @@ namespace PaprikaLang
 
 			foreach (ASTExpression assignmentBody in letDef.AssignmentBodies)
 			{
-				// determine if this is an extended-form assignment 
-				bool isConditionalAssignment = assignmentBody is ASTIfStatement && ((ASTIfStatement)assignmentBody).ElseBody == null;
-				bool isExtendedFormAssignment =
-					isConditionalAssignment;
-
-				// extended-form assignments are 'self assigning', so they handle the Stloc opcode themselves
-				if (isExtendedFormAssignment)
-				{
-					GenSelfAssignmentToLocal(assignmentBody as dynamic, local, ilGen);
-				}
-				else // we must emit Stloc ourselves
-				{
-					Gen(assignmentBody as dynamic, ilGen);
-					ilGen.Emit(OpCodes.Stloc, local);
-				}
+				GenAssignmentToLocal(assignmentBody as dynamic, local, ilGen);
 			}
 		}
 
@@ -408,12 +395,15 @@ namespace PaprikaLang
 			}
 		}
 
-		private void GenSelfAssignmentToLocal(ASTIfStatement conditionalAssignment, LocalBuilder local, ILGenerator ilGen)
+		private void GenAssignmentToLocal(ASTIfStatement conditionalAssignment, LocalBuilder local, ILGenerator ilGen)
 		{
-			// sanity checking
+			// if it has an else block then it's not actually a conditional assignment
+			// so just treat it as a regular expression
 			if (conditionalAssignment.ElseBody != null)
 			{
-				throw new InvalidOperationException("Unexpected else-block on conditional assignment");
+				ASTExpression expr = conditionalAssignment;
+				GenAssignmentToLocal(expr, local, ilGen);
+				return;
 			}
 
 			Gen(conditionalAssignment.ConditionExpr as dynamic, ilGen);
@@ -423,6 +413,61 @@ namespace PaprikaLang
 			Gen(conditionalAssignment.IfBody, ilGen);
 			ilGen.Emit(OpCodes.Stloc, local); // conditionally assign to the local
 			ilGen.MarkLabel(doneLabel);
+		}
+
+		private void GenAssignmentToLocal(ASTForeachAssignment foreachAssignment, LocalBuilder local, ILGenerator ilGen)
+		{
+			LocalBuilder elementLocal = ilGen.DeclareLocal(
+				loweredSymbols.GetType(foreachAssignment.ReferencedSymbol.Type));
+
+			loweredSymbols.AddLocal(foreachAssignment.ReferencedSymbol, elementLocal);
+
+			// gen an enumerator for the range
+			Gen(foreachAssignment.Range as dynamic, ilGen);
+			ilGen.Emit(OpCodes.Callvirt, typeof(IEnumerable).GetMethod("GetEnumerator"));
+			LocalBuilder enumeratorLocal = ilGen.DeclareLocal(typeof(IEnumerator<>));
+			ilGen.Emit(OpCodes.Stloc, enumeratorLocal);
+
+			Label endOfTry = ilGen.BeginExceptionBlock();
+
+				// mark the start of the loop
+				Label topOfLoop = ilGen.DefineLabel();
+				ilGen.MarkLabel(topOfLoop);
+
+				// advance the enumerator
+				ilGen.Emit(OpCodes.Ldloc, enumeratorLocal);
+				ilGen.Emit(OpCodes.Callvirt, typeof(IEnumerator).GetMethod("MoveNext"));
+
+				// if no more then jump to the end
+				ilGen.Emit(OpCodes.Brfalse, endOfTry);
+
+				// extract the element and assign to the local
+				ilGen.Emit(OpCodes.Ldloc, enumeratorLocal);
+				ilGen.Emit(OpCodes.Callvirt, typeof(IEnumerator<>).MakeGenericType(elementLocal.LocalType).GetProperty("Current").GetGetMethod());
+				ilGen.Emit(OpCodes.Stloc, elementLocal);
+
+				// emit the body of the loop
+				Gen(foreachAssignment.Body, ilGen);
+
+				// assign the accumulating local
+				ilGen.Emit(OpCodes.Stloc, local);
+
+				// repeat loop
+				ilGen.Emit(OpCodes.Br, topOfLoop);
+
+			ilGen.BeginFinallyBlock();
+
+				// finally, dispose of the enumerator
+				ilGen.Emit(OpCodes.Ldloc, enumeratorLocal);
+				ilGen.Emit(OpCodes.Callvirt, typeof(IDisposable).GetMethod("Dispose"));
+
+			ilGen.EndExceptionBlock();
+		}
+
+		private void GenAssignmentToLocal(ASTExpression simpleAssignment, LocalBuilder local, ILGenerator ilGen)
+		{
+			Gen(simpleAssignment as dynamic, ilGen);
+			ilGen.Emit(OpCodes.Stloc, local);
 		}
 	}
 }

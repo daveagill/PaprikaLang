@@ -31,27 +31,22 @@ func InCarpet(x number, y number) -> number
 	}
 }
 
-func SierpinskiFractal(n number, x number, y number, img string) -> string
+func SierpinskiFractal(size number) -> string
 {
-	if y < n
+	let n number = 1 then foreach i number in [0 to size] { n * 3 }
+
+	let img string = "" then foreach y number in [0 to n]
 	{
-		if x < n
+		let row string = "" then foreach x number in [0 to n]
 		{
-			let cell string = if InCarpet(x, y) == 1 { "██" } else { "  " }
-			SierpinskiFractal(n, x+1, y, img .. cell)
+			row .. if InCarpet(x, y) == 1 { "██" } else { "  " }
 		}
-		else
-		{
-			SierpinskiFractal(n, 0, y+1, img .. "\n")
-		}
+		img .. row .. "\n"
 	}
-	else
-	{
-		img
-	}
+	img
 }
 
 func Main() -> string
 {
-	SierpinskiFractal(3*3*3, 0, 0, "")
+	SierpinskiFractal(3)
 }
