@@ -1,13 +1,10 @@
-﻿func CountTo(x number, result string) -> string
+﻿func CountTo(n number) -> string
 {
-	if x == 0
+	let result string = "" then foreach i number in [0 to n]
 	{
-		"0"
+		result .. i .. ", "
 	}
-	else
-	{
-		CountTo(x - 1, result) .. ", " .. x
-	}
+	result .. n
 }
 
 func Main() -> string
