@@ -92,8 +92,8 @@ namespace PaprikaLang
 
 		public TokenType ScanNextToken()
 		{
-			// eat whitespace
-			cursor.AdvanceWhile(Char.IsWhiteSpace);
+			// ignore whitespace and comments
+			EatWhitespaceAndComments();
 
 			// detect end of token stream
 			if (cursor.IsDone())
@@ -109,12 +109,37 @@ namespace PaprikaLang
 				return TokenType;
 			}
 
-
-
 			// otherwise just extract a single char symbol
 			char symbol = cursor.GetChar();
 			cursor.Advance();
 			return EmitToken(TokenType.SpecialChar, symbol.ToString());
+		}
+
+		private void EatWhitespaceAndComments()
+		{
+			while (true)
+			{
+				int startIdx = cursor.CharIdx;
+
+				// eat whitespace
+				cursor.AdvanceWhile(Char.IsWhiteSpace);
+
+				// detect a comment with //
+				if (!cursor.IsDone() &&
+					cursor.GetChar() == '/' &&
+					cursor.CanLookAhead(1) &&
+				    cursor.LookAhead(1) == '/')
+				{
+					// eat the whole line up till the newline
+					cursor.AdvanceWhile(c => c != '\n');
+				}
+
+				// if nothing has been eaten then we can exit
+				if (cursor.CharIdx == startIdx)
+				{
+					return;
+				}
+			}
 		}
 
 		private bool ScanForNumerics()
