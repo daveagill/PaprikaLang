@@ -1,0 +1,13 @@
+﻿func StringJoin(range seq<number>, separator string) -> string
+{
+	let result string = "" then foreach i number in range
+	{
+		result .. (if result == "" { "" } else { separator }) .. i
+	}
+	result
+}
+
+func Main() -> string
+{
+	StringJoin([0 to 10], "|")
+}
