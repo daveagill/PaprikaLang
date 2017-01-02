@@ -8,10 +8,7 @@ namespace PaprikaLang
 	{
 		public void TypeCheck(ASTModule module)
 		{
-			foreach (var funcDef in module.FunctionDefs)
-			{
-				TypeCheck(funcDef);
-			}
+			TypeCheck(module.Body);
 		}
 
 		private TypeDetail TypeCheck(ASTBlock block)
@@ -145,10 +142,10 @@ namespace PaprikaLang
 			{
 				TypeDetail RHSType = TypeCheck(assignmentBody as dynamic);
 
-				if (letDef.ReferencedSymbol.Type != RHSType)
+				if (letDef.Symbol.Type != RHSType)
 				{
 					throw new Exception("Let definition of " + letDef.Name + " is defined with a type of " +
-										letDef.ReferencedSymbol.Type + " but is attempting to assign a " +
+										letDef.Symbol.Type + " but is attempting to assign a " +
 										"type of " + RHSType);
 				}
 			}
@@ -211,6 +208,11 @@ namespace PaprikaLang
 			}
 
 			return TypeDetail.ListOfNumbers;
+		}
+
+		private TypeDetail TypeCheck(ASTTypeDef typeDef)
+		{
+			return null; // type definitions have no type
 		}
 	}
 }

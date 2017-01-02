@@ -21,13 +21,29 @@ namespace PaprikaLang
 
 		private ASTModule ParseModule()
 		{
-			IList<ASTFunctionDef> funcDefs = new List<ASTFunctionDef>();
+			IList<ASTNode> defs = new List<ASTNode>();
 			while (lexer.IncomingToken != TokenType.EndOfTokens)
 			{
-				ASTFunctionDef funcDef = ParseFunctionDef();
-				funcDefs.Add(funcDef);
+				ASTNode node = null;
+
+				if (lexer.IncomingToken == TokenType.Type)
+				{
+					node = ParseTypeDef();
+				}
+				else if (lexer.IncomingToken == TokenType.Function)
+				{
+					node = ParseFunctionDef();
+				}
+
+				if (node == null) // this is actually a parse bug
+				{
+					throw new Exception("Unhandled syntax in block: " + lexer.IncomingToken + ", " + lexer.IncomingValue);
+				}
+
+				defs.Add(node);
 			}
-			return new ASTModule(funcDefs);
+
+			return new ASTModule(new ASTBlock(defs));
 		}
 
 		private ASTTypeNameParts ParseTypeNameParts()
@@ -357,6 +373,29 @@ namespace PaprikaLang
 			lexer.ExpectChar(']');
 
 			return new ASTList(from, to, step);
+		}
+
+		public ASTTypeDef ParseTypeDef()
+		{
+			lexer.Expect(TokenType.Type);
+
+			lexer.Expect(TokenType.Identifier);
+			string typename = lexer.AcceptedValue;
+
+			lexer.ExpectChar('{');
+
+			IList<ASTTypeDef.ASTField> fields = new List<ASTTypeDef.ASTField>();
+			while (!lexer.AcceptChar('}'))
+			{
+				lexer.Expect(TokenType.Identifier);
+				string fieldName = lexer.AcceptedValue;
+
+				ASTTypeNameParts fieldType = ParseTypeNameParts();
+
+				fields.Add(new ASTTypeDef.ASTField(fieldName, fieldType));
+			}
+
+			return new ASTTypeDef(typename, fields);
 		}
 
 		public static ParseResult Parse(string input)

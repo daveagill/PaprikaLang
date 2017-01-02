@@ -17,11 +17,11 @@ namespace PaprikaLang
 
 	public class ASTModule : ASTDeclaration
 	{
-		public IList<ASTFunctionDef> FunctionDefs { get; }
+		public ASTBlock Body { get; }
 
-		public ASTModule(IList<ASTFunctionDef> functionDefs)
+		public ASTModule(ASTBlock body)
 		{
-			this.FunctionDefs = functionDefs;
+			this.Body = body;
 		}
 	}
 
@@ -152,7 +152,7 @@ namespace PaprikaLang
 		public ASTTypeNameParts Type { get; }
 		public IList<ASTExpression> AssignmentBodies { get; }
 
-		public LocalSymbol ReferencedSymbol { get; set; }
+		public LocalSymbol Symbol { get; set; }
 
 		public ASTLetDef(string name, ASTTypeNameParts type, IList<ASTExpression> assignmentBodies)
 		{
@@ -205,6 +205,32 @@ namespace PaprikaLang
 			this.ElementType = elementType;
 			this.Range = range;
 			this.Body = body;
+		}
+	}
+
+	public class ASTTypeDef : ASTDeclaration
+	{
+		public class ASTField : ASTDeclaration
+		{
+			public string Name { get; }
+			public ASTTypeNameParts Type { get; }
+
+			public ASTField(string name, ASTTypeNameParts type)
+			{
+				this.Name = name;
+				this.Type = type;
+			}
+		}
+
+		public string Name { get; }
+		public IList<ASTField> Fields { get; }
+
+		public TypeSymbol Symbol { get; set; }
+
+		public ASTTypeDef(string name, IList<ASTField> fields)
+		{
+			this.Name = name;
+			this.Fields = fields;
 		}
 	}
 }

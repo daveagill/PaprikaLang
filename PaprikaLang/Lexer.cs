@@ -13,6 +13,7 @@ namespace PaprikaLang
 		StringLiteral,
 
 		// keywords
+		Type,
 		Function,
 		Let,
 		Then,
@@ -214,6 +215,10 @@ namespace PaprikaLang
 			TokenType type = TokenType.Identifier;
 			switch (value)
 			{
+				case "type":
+					type = TokenType.Type;
+					break;
+					
 				case "func":
 					type = TokenType.Function;
 					break;

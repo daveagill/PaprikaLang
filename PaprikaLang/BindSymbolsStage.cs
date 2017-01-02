@@ -15,7 +15,7 @@ namespace PaprikaLang
 
 		public void Bind(ASTModule module)
 		{
-			BindScope(module.FunctionDefs, new SymbolTable(symTab));
+			BindScope(module.Body.Body, new SymbolTable(symTab));
 		}
 
 		public void Bind(ASTBlock block)
@@ -73,8 +73,8 @@ namespace PaprikaLang
 
 			// now add the LHS definition to the symbol table
 			TypeDetail type = ResolveConcreteType(letDef.Type);
-			letDef.ReferencedSymbol = new LocalSymbol(letDef.Name, type);
-			symTab.Add(letDef.ReferencedSymbol);
+			letDef.Symbol = new LocalSymbol(letDef.Name, type);
+			symTab.Add(letDef.Symbol);
 
 			// all subsequent assignment bodies can now access the LHS
 			if (letDef.AssignmentBodies.Count > 1)
@@ -122,13 +122,38 @@ namespace PaprikaLang
 			}
 		}
 
+		private void DeclareTypeDef(ASTTypeDef typeDef)
+		{
+			TypeDetail representingType = new TypeDetail(typeDef.Name, TypePrimitive.Structure);
+			typeDef.Symbol = new TypeSymbol(representingType);
+
+			foreach (ASTTypeDef.ASTField field in typeDef.Fields)
+			{
+				TypeDetail fieldType = ResolveConcreteType(field.Type);
+				FieldSymbol fieldSym = new FieldSymbol(field.Name, fieldType);
+				typeDef.Symbol.Fields.Add(fieldSym);
+			}
+
+			symTab.Add(typeDef.Symbol);
+			symTab.AddType(representingType);
+		}
+
 		private void BindScope(IEnumerable<ASTNode> nodes, SymbolTable scopeSymbolTable)
 		{
 			// enter the new scope
 			SymbolTable originalSymbolTable = symTab;
 			symTab = scopeSymbolTable;
 
-			// hoist function symbols first
+			// hoist type definitions first
+			foreach (var node in nodes)
+			{
+				if (node is ASTTypeDef)
+				{
+					DeclareTypeDef((ASTTypeDef)node);
+				}
+			}
+
+			// hoist function symbols second
 			foreach (var node in nodes)
 			{
 				if (node is ASTFunctionDef)
@@ -150,6 +175,7 @@ namespace PaprikaLang
 		// nothing to do here
 		private void Bind(ASTNumeric numeric) { }
 		private void Bind(ASTString str) { }
+		private void Bind(ASTTypeDef typeDef) { }
 
 		private TypeDetail ResolveConcreteType(ASTTypeNameParts type)
 		{

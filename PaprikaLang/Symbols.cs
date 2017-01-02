@@ -12,7 +12,7 @@ namespace PaprikaLang
 		Boolean,
 		List,
 		Func,
-		UserDefined,
+		Structure,
 		ConcreteGeneric,
 		Unknown
 	}
@@ -30,7 +30,6 @@ namespace PaprikaLang
 
 		public string SimpleName { get; }
 		public TypePrimitive TypePrimitive { get; }
-		public DataTypeSymbol UserDefinedSymbol { get; }
 
 		public int UnboundArgCount { get; }
 		public bool IsUnbound
@@ -51,7 +50,7 @@ namespace PaprikaLang
 			}
 		}
 
-		private TypeDetail(string simpleName, TypePrimitive typePrimitive, int unboundArgCount = 0)
+		public TypeDetail(string simpleName, TypePrimitive typePrimitive, int unboundArgCount = 0)
 		{
 			SimpleName = simpleName;
 			TypePrimitive = typePrimitive;
@@ -73,16 +72,9 @@ namespace PaprikaLang
 			GenericParams = genericParams;
 		}
 
-		public TypeDetail(DataTypeSymbol userDefinedTypeSymbol)
-		{
-			SimpleName = userDefinedTypeSymbol.Name;
-			TypePrimitive = TypePrimitive.UserDefined;
-			UserDefinedSymbol = userDefinedTypeSymbol;
-		}
-
 		public override string ToString()
 		{
-			return string.Format("[TypeDetail: SimpleName={0}, TypePrimitive={1}, UserDefinedSymbol={2}, GenericType={3}]", SimpleName, TypePrimitive, UserDefinedSymbol, GenericType);
+			return string.Format("[TypeDetail: SimpleName={0}, TypePrimitive={1}, GenericType={2}]", SimpleName, TypePrimitive, GenericType);
 		}
 
 		public override int GetHashCode()
@@ -100,7 +92,6 @@ namespace PaprikaLang
 			return object.ReferenceEquals(lhs, rhs) ||
 				         !object.ReferenceEquals(lhs, null) && !object.ReferenceEquals(rhs, null) &&
 				         lhs.TypePrimitive == rhs.TypePrimitive &&
-				         lhs.UserDefinedSymbol == rhs.UserDefinedSymbol &&
 				         lhs.GenericParams.SequenceEqual(rhs.GenericParams);
 		}
 
@@ -119,15 +110,17 @@ namespace PaprikaLang
 	}
 
 
-	public class DataTypeSymbol : ISymbol
+	public class TypeSymbol : ISymbol
 	{
 		public string Name { get; }
 		public TypeDetail Type { get; }
+		public IList<FieldSymbol> Fields { get; }
 
-		public DataTypeSymbol(string name)
+		public TypeSymbol(TypeDetail type)
 		{
-			Name = name;
-			Type = new TypeDetail(this);
+			Name = type.SimpleName;
+			Type = type;
+			Fields = new List<FieldSymbol>();
 		}
 	}
 
@@ -167,6 +160,18 @@ namespace PaprikaLang
 		public TypeDetail Type { get; }
 
 		public LocalSymbol(string name, TypeDetail typeInfo)
+		{
+			Name = name;
+			Type = typeInfo;
+		}
+	}
+
+	public class FieldSymbol : ISymbol
+	{
+		public string Name { get; }
+		public TypeDetail Type { get; }
+
+		public FieldSymbol(string name, TypeDetail typeInfo)
 		{
 			Name = name;
 			Type = typeInfo;

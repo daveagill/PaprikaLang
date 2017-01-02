@@ -46,10 +46,10 @@ namespace PaprikaLang
 			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName, filename);
 
 			string mainClassName = assemblyName + "_PaprikaMainClass";
-			TypeBuilder typeBuilder = moduleBuilder.DefineType(mainClassName, TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract | TypeAttributes.Public);
+			TypeBuilder typeBuilder = moduleBuilder.DefineType(mainClassName, TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract | TypeAttributes.NotPublic);
 
 			LoweredSymbolTable loweredSymbols =
-				new StructuralSymbolLoweringStage(assemblyBuilder, typeBuilder).LowerSymbols(module);
+				new StructuralSymbolLoweringStage(assemblyBuilder, moduleBuilder, typeBuilder).LowerSymbols(module);
 
 			new ILGenStage(loweredSymbols).EmitIL(module);
 
@@ -110,34 +110,48 @@ namespace PaprikaLang
 	public class StructuralSymbolLoweringStage
 	{
 		private AssemblyBuilder assemblyBuilder;
-		private TypeBuilder typeBuilder;
+		private ModuleBuilder moduleBuilder;
+		private TypeBuilder typeBuilderForMethods;
 
 		private LoweredSymbolTable loweredSymbols = new LoweredSymbolTable();
 
-		public StructuralSymbolLoweringStage(AssemblyBuilder assemblyBuilder, TypeBuilder typeBuilder)
+		public StructuralSymbolLoweringStage(AssemblyBuilder assemblyBuilder, ModuleBuilder moduleBuilder, TypeBuilder typeBuilderForMethods)
 		{
 			this.assemblyBuilder = assemblyBuilder;
-			this.typeBuilder = typeBuilder;
+			this.moduleBuilder = moduleBuilder;
+			this.typeBuilderForMethods = typeBuilderForMethods;
 		}
 
 		public LoweredSymbolTable LowerSymbols(ASTModule module)
 		{
 			MethodInfo mainMethod = null;
 
-			// declare all the method builders
-			foreach (ASTFunctionDef funcDef in module.FunctionDefs)
+			// declare all the type builders
+			foreach (var node in module.Body.Body)
 			{
-				MethodInfo method = DeclareMethodBuilders(funcDef);
-
-				// set the main method if we encounter it
-				if (method.Name == "Main")
+				if (node is ASTTypeDef)
 				{
-					//assemblyBuilder.SetEntryPoint(method);
-					mainMethod = method;
+					CreateTypeBuilder(((ASTTypeDef)node).Symbol);
 				}
 			}
 
-			var entryMethod = typeBuilder.DefineMethod("Execute", MethodAttributes.Public | MethodAttributes.Static);
+			// declare all the method builders
+			foreach (var node in module.Body.Body)
+			{
+				if (node is ASTFunctionDef)
+				{
+					MethodInfo method = DeclareMethodBuilders((ASTFunctionDef)node);
+
+					// set the main method if we encounter it
+					if (method.Name == "Main")
+					{
+						//assemblyBuilder.SetEntryPoint(method);
+						mainMethod = method;
+					}
+				}
+			}
+
+			var entryMethod = typeBuilderForMethods.DefineMethod("Execute", MethodAttributes.Public | MethodAttributes.Static);
 			assemblyBuilder.SetEntryPoint(entryMethod);
 			var ilGen = entryMethod.GetILGenerator();
 			ilGen.Emit(OpCodes.Call, mainMethod);
@@ -170,7 +184,7 @@ namespace PaprikaLang
 
 			Type returnType = loweredSymbols.GetType(funcSym.ReturnType);
 
-			MethodBuilder method = typeBuilder.DefineMethod(
+			MethodBuilder method = typeBuilderForMethods.DefineMethod(
 				funcSym.Name,
 				MethodAttributes.Public | MethodAttributes.Static,
 				returnType,
@@ -178,6 +192,19 @@ namespace PaprikaLang
 
 			loweredSymbols.AddMethod(funcSym, method);
 			return method;
+		}
+
+		public void CreateTypeBuilder(TypeSymbol typeSym)
+		{
+			TypeBuilder typeBuilder = moduleBuilder.DefineType(typeSym.Name, TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Public);
+
+			foreach (FieldSymbol fieldSym in typeSym.Fields)
+			{
+				Type fieldType = loweredSymbols.GetType(fieldSym.Type);
+				typeBuilder.DefineField(fieldSym.Name, fieldType, FieldAttributes.Public);
+			}
+
+			typeBuilder.CreateType();
 		}
 	}
 
@@ -192,9 +219,9 @@ namespace PaprikaLang
 
 		public void EmitIL(ASTModule module)
 		{
-			foreach (ASTFunctionDef funcDef in module.FunctionDefs)
+			foreach (var node in module.Body.Body)
 			{
-				Gen(funcDef, null);
+				Gen(node as dynamic, null);
 			}
 		}
 
@@ -217,6 +244,11 @@ namespace PaprikaLang
 			Gen(block.Body.Last() as dynamic, ilGen);
 		}
 
+		private void Gen(ASTTypeDef typeDef, ILGenerator ilGen)
+		{
+			// nothing to do
+		}
+
 		private void Gen(ASTFunctionDef funcDef, ILGenerator ilGen)
 		{
 			// overwrite ilGen with the appropriate one for this method
@@ -228,9 +260,9 @@ namespace PaprikaLang
 		private void Gen(ASTLetDef letDef, ILGenerator ilGen)
 		{
 			LocalBuilder local = ilGen.DeclareLocal(
-				loweredSymbols.GetType(letDef.ReferencedSymbol.Type));
+				loweredSymbols.GetType(letDef.Symbol.Type));
 
-			loweredSymbols.AddLocal(letDef.ReferencedSymbol, local);
+			loweredSymbols.AddLocal(letDef.Symbol, local);
 
 			foreach (ASTExpression assignmentBody in letDef.AssignmentBodies)
 			{

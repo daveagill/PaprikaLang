@@ -9,28 +9,30 @@ namespace PaprikaLang
 		public static string Stringify(ASTModule module)
 		{
 			string s = "";
-			foreach (ASTFunctionDef funcDef in module.FunctionDefs)
+			foreach (ASTNode node in module.Body.Body)
 			{
-				s += Stringify(funcDef) + '\n';
+				if (s.Length > 0)
+				{
+					s += "\n\n";
+				}
+				s += Stringify(node as dynamic);
 			}
 			return s;
 		}
 
 		private static string Stringify(ASTBlock block)
 		{
-			bool isFirst = true;
 			string s = "";
 			foreach (ASTNode node in block.Body)
 			{
-				if (!isFirst)
+				if (s.Length > 0)
 				{
-					s += "\n";
+					s += '\n';
 				}
 				s += Stringify(node as dynamic);
-				isFirst = false;
 			}
 
-			return block.Body.Count == 1 ? "{ " + s + " }" : "{\n" + s + "\n}";
+			return block.Body.Count <= 1 ? "{ " + s + " }" : "{\n" + s + "\n}";
 		}
 
 		private static string Stringify(ASTString str)
@@ -120,6 +122,21 @@ namespace PaprikaLang
 				s += ">";
 			}
 			return s;
+		}
+
+		private static string Stringify(ASTTypeDef typeDef)
+		{
+			string s = "";
+			foreach (ASTTypeDef.ASTField field in typeDef.Fields)
+			{
+				if (s.Length > 0)
+				{
+					s += '\n';
+				}
+				s += field.Name + " " + Stringify(field.Type);
+			}
+
+			return "type " + typeDef.Name + (typeDef.Fields.Count <= 1 ? " { " + s + " }" : " {\n" + s + "\n}");
 		}
 
 		private static string Stringify(ASTNode untyped)
