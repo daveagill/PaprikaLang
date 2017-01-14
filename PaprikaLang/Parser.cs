@@ -64,7 +64,7 @@ namespace PaprikaLang
 			return new ASTTypeNameParts(typename, genericArgs);
 		}
 
-		private ASTExpression ParseExpressionSequence(ASTExpression LHS, int minPrecedenceThreshold)
+		private ASTExpression ParseOperatorSequence(ASTExpression LHS, int minPrecedenceThreshold)
 		{
 			// keep going while there are still operators in the sequence
 			while (true)
@@ -77,7 +77,7 @@ namespace PaprikaLang
 				}
 
 				// parse the next operand
-				ASTExpression operand = ParseOperand();
+				ASTExpression operand = ParseOperandOrMemberAccess();
 
 				// lookahead for an optional right operator
 				BinaryOps? rightOperator = BinaryOpSymbolMatcher.LookaheadBinaryOp(lexer);
@@ -92,7 +92,7 @@ namespace PaprikaLang
 				{
 					int subExpressionMinPrecedence = leftPrecedence;
 					// the operand is the LHS of the sub-expression
-					operand = ParseExpressionSequence(operand, subExpressionMinPrecedence);
+					operand = ParseOperatorSequence(operand, subExpressionMinPrecedence);
 				}
 
 				// fold RHS operand into the overall LHS expression
@@ -114,7 +114,7 @@ namespace PaprikaLang
 
 		private ASTExpression ParseExpression()
 		{
-			return ParseExpressionSequence(ParseOperand(), -1);
+			return ParseOperatorSequence(ParseOperandOrMemberAccess(), -1);
 		}
 
 		// A 'then expression' is an extended form of expression
@@ -133,6 +133,23 @@ namespace PaprikaLang
 			return ParseExpression();
 		}
 
+		private ASTExpression ParseOperandOrMemberAccess()
+		{
+			ASTExpression expr = ParseOperand();
+
+			// resolve member accesses via the dot operator
+			while (lexer.AcceptChar('.'))
+			{
+				lexer.Expect(TokenType.Identifier);
+				string dataMember = lexer.AcceptedValue;
+
+				// fold into the expression as a member-access node
+				expr = new ASTMemberAccess(expr, dataMember);
+			}
+
+			return expr;
+		}
+
 		private ASTExpression ParseOperand()
 		{
 			if (lexer.Accept(TokenType.NumericLiteral))
@@ -145,7 +162,7 @@ namespace PaprikaLang
 			}
 			else if (lexer.IncomingToken == TokenType.Identifier)
 			{
-				return ParseNamedValueOrFunctionCall();
+				return ParseNamedValueOrFunctionCallOrTypeConstruction();
 			}
 			else if (lexer.IncomingToken == TokenType.If)
 			{
@@ -278,23 +295,46 @@ namespace PaprikaLang
 			return new ASTLetDef(name, type, assignmentBodies);
 		}
 
-		private ASTExpression ParseNamedValueOrFunctionCall()
+		private ASTExpression ParseNamedValueOrFunctionCallOrTypeConstruction()
 		{
-			// named-values and function calls start with a name
+			// named-values, function calls and type constructions all start with a name
 			lexer.Expect(TokenType.Identifier);
 			string name = lexer.AcceptedValue;
 
-			// function calls end with paranthesis and an arguments list
-			// so if there's no parenthesis then it's a named value
-			if (!lexer.AcceptChar('('))
+			// use lookahead to classify the parse
+			bool isFunctionCall = lexer.IsIncomingChar('(');
+			bool isTypeConstruction = lexer.IsIncomingChar('{');
+			bool isNamedValue = !isFunctionCall && !isTypeConstruction;
+
+			// if it's a named value then we're done
+			if (isNamedValue)
 			{
 				return new ASTNamedValue(name);
 			}
 
-			// otherwise it's a function call, so parse the argument list
+			// otherwise we need to parse the argument list
 
+			if (isFunctionCall)
+			{
+				lexer.ExpectChar('(');
+				IList<ASTExpression> args = ParseCallArgList(')');
+				return new ASTFunctionCall(name, args);
+			}
+			else if (isTypeConstruction)
+			{
+				lexer.ExpectChar('{');
+				IList<ASTExpression> args = ParseCallArgList('}');
+				return new ASTTypeConstruction(name, args);
+			}
+
+			// this implies an unhandled code-path
+			throw new Exception("Unhandled parse path. This is unexpected.");
+		}
+
+		private IList<ASTExpression> ParseCallArgList(char terminatingChar)
+		{
 			IList<ASTExpression> args = new List<ASTExpression>();
-			while (!lexer.AcceptChar(')'))
+			while (!lexer.AcceptChar(terminatingChar))
 			{
 				// expect a comma, unless it's the first arg
 				if (args.Count != 0)
@@ -302,10 +342,9 @@ namespace PaprikaLang
 					lexer.ExpectChar(',');
 				}
 
-				args.Add( ParseExpression() );
+				args.Add(ParseExpression());
 			}
-
-			return new ASTFunctionCall(name, args);
+			return args;
 		}
 
 		private ASTIfStatement ParseIf()

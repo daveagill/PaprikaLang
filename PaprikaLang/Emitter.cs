@@ -31,7 +31,7 @@ namespace PaprikaLang
 				}
 			}
 
-			throw new Exception("TypeInfo '" + typeDetail + "' is currently not supported for bytecode emission");
+			throw new Exception("TypeInfo '" + typeDetail + "' does not map to a .Net type");
 		}
 	}
 
@@ -60,9 +60,12 @@ namespace PaprikaLang
 
 	public class LoweredSymbolTable
 	{
+		private IDictionary<TypeDetail, Type> typeDetailsToType = new Dictionary<TypeDetail, Type>();
+
 		private IDictionary<FunctionSymbol, MethodBuilder> funcsToMethods = new Dictionary<FunctionSymbol, MethodBuilder>();
 		private IDictionary<ParamSymbol, short> argsToIndex = new Dictionary<ParamSymbol, short>();
 		private IDictionary<LocalSymbol, LocalBuilder> localSymbolsToBuilders = new Dictionary<LocalSymbol, LocalBuilder>();
+		private IDictionary<FieldSymbol, FieldInfo> fieldSymbolToFields = new Dictionary<FieldSymbol, FieldInfo>();
 
 		public void AddMethod(FunctionSymbol funcSym, MethodBuilder methodBuilder)
 		{
@@ -79,6 +82,16 @@ namespace PaprikaLang
 		public void AddLocal(LocalSymbol locaSym, LocalBuilder localBuilder)
 		{
 			localSymbolsToBuilders.Add(locaSym, localBuilder);
+		}
+
+		public void AddType(TypeSymbol typeSym, Type type)
+		{
+			typeDetailsToType.Add(typeSym.Type, type);
+		}
+
+		public void AddFieldMember(FieldSymbol fieldSym, FieldInfo field)
+		{
+			fieldSymbolToFields.Add(fieldSym, field);
 		}
 
 		public MethodInfo GetMethod(FunctionSymbol funcSym)
@@ -101,8 +114,19 @@ namespace PaprikaLang
 			return localSymbolsToBuilders[localSym];
 		}
 
+		public FieldInfo GetField(FieldSymbol fieldSym)
+		{
+			return fieldSymbolToFields[fieldSym];
+		}
+
 		public Type GetType(TypeDetail typeDetail)
 		{
+			Type mappedType = null;
+			if (typeDetailsToType.TryGetValue(typeDetail, out mappedType))
+			{
+				return mappedType;
+			}
+
 			return DotNetTypeMapper.MapTypeInfo(typeDetail);
 		}
 	}
@@ -201,10 +225,12 @@ namespace PaprikaLang
 			foreach (FieldSymbol fieldSym in typeSym.Fields)
 			{
 				Type fieldType = loweredSymbols.GetType(fieldSym.Type);
-				typeBuilder.DefineField(fieldSym.Name, fieldType, FieldAttributes.Public);
+				FieldBuilder fieldBuilder = typeBuilder.DefineField(fieldSym.Name, fieldType, FieldAttributes.Public);
+				loweredSymbols.AddFieldMember(fieldSym, fieldBuilder);
 			}
 
 			typeBuilder.CreateType();
+			loweredSymbols.AddType(typeSym, typeBuilder);
 		}
 	}
 
@@ -425,6 +451,18 @@ namespace PaprikaLang
 				Gen(ifStatement.ElseBody, ilGen);
 				ilGen.MarkLabel(doneLabel);
 			}
+		}
+
+		private void Gen(ASTMemberAccess memberAccess, ILGenerator ilGen)
+		{
+			Gen(memberAccess.LHS as dynamic, ilGen);
+			FieldInfo field = loweredSymbols.GetField(memberAccess.FieldSymbol);
+			ilGen.Emit(OpCodes.Ldfld, field);
+		}
+
+		private void Gen(ASTTypeConstruction memberAccess, ILGenerator ilGen)
+		{
+			// TODO
 		}
 
 		private void GenAssignmentToLocal(ASTIfStatement conditionalAssignment, LocalBuilder local, ILGenerator ilGen)

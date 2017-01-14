@@ -233,4 +233,32 @@ namespace PaprikaLang
 			this.Fields = fields;
 		}
 	}
+
+	public class ASTMemberAccess : ASTExpression
+	{
+		public ASTExpression LHS { get; }
+		public string DataMember { get; }
+
+		public FieldSymbol FieldSymbol { get; set; }
+
+		public ASTMemberAccess(ASTExpression LHS, string dataMember)
+		{
+			this.LHS = LHS;
+			this.DataMember = dataMember;
+		}
+	}
+
+	public class ASTTypeConstruction : ASTExpression
+	{
+		public string Name { get; }
+		public IList<ASTExpression> Args { get; }
+
+		public TypeSymbol ReferencedSymbol { get; set; }
+
+		public ASTTypeConstruction(string name, IList<ASTExpression> args)
+		{
+			this.Name = name;
+			this.Args = args;
+		}
+	}
 }

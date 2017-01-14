@@ -115,12 +115,14 @@ namespace PaprikaLang
 		public string Name { get; }
 		public TypeDetail Type { get; }
 		public IList<FieldSymbol> Fields { get; }
+		public SymbolTable SymbolTable { get; }
 
-		public TypeSymbol(TypeDetail type)
+		public TypeSymbol(TypeDetail type, SymbolTable symbolTable)
 		{
 			Name = type.SimpleName;
 			Type = type;
 			Fields = new List<FieldSymbol>();
+			SymbolTable = symbolTable;
 		}
 	}
 

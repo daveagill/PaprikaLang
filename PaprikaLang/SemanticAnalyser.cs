@@ -6,7 +6,6 @@ namespace PaprikaLang
 		public static void Analyse(ASTModule module)
 		{
 			new BindSymbolsStage(MakeDefaultScope()).Bind(module);
-			new TypeCheckStage().TypeCheck(module);
 		}
 
 		private static SymbolTable MakeDefaultScope()

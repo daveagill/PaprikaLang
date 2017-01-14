@@ -59,7 +59,16 @@ namespace PaprikaLang
 
 		private static string Stringify(ASTFunctionCall funcCall)
 		{
-			return "call " + funcCall.Name + "(" + funcCall.Args.Count + ")";
+			string s = "";
+			foreach (var arg in funcCall.Args)
+			{
+				if (s.Length > 0)
+				{
+					s += ", '";
+				}
+				s += Stringify(arg as dynamic);
+			}
+			return "call " + funcCall.Name + "(" + s + ")";
 		}
 
 		private static string Stringify(ASTIfStatement ifStatement)
@@ -137,6 +146,25 @@ namespace PaprikaLang
 			}
 
 			return "type " + typeDef.Name + (typeDef.Fields.Count <= 1 ? " { " + s + " }" : " {\n" + s + "\n}");
+		}
+
+		private static string Stringify(ASTMemberAccess memberAccess)
+		{
+			return Stringify(memberAccess.LHS as dynamic) + "." + memberAccess.DataMember;
+		}
+
+		private static string Stringify(ASTTypeConstruction typeConstruction)
+		{
+			string s = "";
+			foreach (var arg in typeConstruction.Args)
+			{
+				if (s.Length > 0)
+				{
+					s += ", '";
+				}
+				s += Stringify(arg as dynamic);
+			}
+			return "construct " + typeConstruction.Name + '{' + s + '}';
 		}
 
 		private static string Stringify(ASTNode untyped)

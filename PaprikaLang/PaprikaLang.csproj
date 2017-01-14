@@ -42,7 +42,6 @@
     <Compile Include="Symbols.cs" />
     <Compile Include="Emitter.cs" />
     <Compile Include="BindSymbolsStage.cs" />
-    <Compile Include="TypeCheckStage.cs" />
     <Compile Include="Stringifier.cs" />
     <Compile Include="SemanticAnalyser.cs" />
     <Compile Include="Program.cs" />

@@ -1,9 +1,15 @@
 ﻿type MyType
 {
-	name string age number pets seq<string>
+	name string
+	age number
 }
 
-func Main() -> number
+func test(t MyType) -> string
 {
-	5
+	t.name
+}
+
+func Main() -> string
+{
+	test(MyType{"fred",45})
 }
