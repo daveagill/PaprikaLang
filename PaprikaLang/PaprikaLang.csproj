@@ -66,6 +66,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="paprika scripts\StringJoin.paprika" />
+    <None Include="paprika scripts\PersonAndAnimal.paprika" />
+    <None Include="paprika scripts\LinkedList.txt" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="paprika scripts\" />

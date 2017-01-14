@@ -1,0 +1,18 @@
+﻿type person
+{
+	name string
+	age number
+	pet animal
+}
+
+type animal
+{
+	name string
+	species string
+}
+
+func Main() -> string
+{
+	let fred person = person{"Fred",45, animal{"Mr Woofy", "Dog"}}
+	fred.pet.name
+}

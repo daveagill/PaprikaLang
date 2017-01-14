@@ -61,9 +61,9 @@ namespace PaprikaLang
 			localSymbolsToBuilders.Add(locaSym, localBuilder);
 		}
 
-		public void AddType(TypeSymbol typeSym, Type type)
+		public void AddType(TypeSymbol typeSym, TypeBuilder typeBuilder)
 		{
-			typeDetailsToType.Add(typeSym.Type, type);
+			typeDetailsToType.Add(typeSym.Type, typeBuilder);
 		}
 
 		public void AddFieldMember(FieldSymbol fieldSym, FieldInfo field)
@@ -105,6 +105,11 @@ namespace PaprikaLang
 			}
 
 			return DotNetTypeMapper.MapTypeInfo(typeDetail);
+		}
+
+		public TypeBuilder GetTypeBuilder(TypeSymbol typeSym)
+		{
+			return GetType(typeSym.Type) as TypeBuilder;
 		}
 	}
 
@@ -221,34 +226,6 @@ namespace PaprikaLang
 		public void CreateTypeBuilder(TypeSymbol typeSym)
 		{
 			TypeBuilder typeBuilder = moduleBuilder.DefineType(typeSym.Name, TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Public);
-
-			Type[] fieldTypes = typeSym.Fields.Select(
-				f => loweredSymbols.GetType(f.Type)).ToArray();
-
-			// define a constructor which will initialise each field
-			ConstructorBuilder constructorBuilder = typeBuilder.DefineConstructor(
-				MethodAttributes.Public,
-				CallingConventions.Standard,
-				fieldTypes);
-
-			ILGenerator ilGen = constructorBuilder.GetILGenerator();
-
-			for (int i = 0; i < typeSym.Fields.Count; ++i)
-			{
-				FieldSymbol fieldSym = typeSym.Fields[i];
-				Type fieldType = fieldTypes[i];
-
-				FieldBuilder fieldBuilder = typeBuilder.DefineField(fieldSym.Name, fieldType, FieldAttributes.Public);
-				loweredSymbols.AddFieldMember(fieldSym, fieldBuilder);
-
-				// init field in constructor
-				ilGen.Emit(OpCodes.Ldarg_0); // load 'this'
-				ilGen.Emit(OpCodes.Ldarg, i+1);
-				ilGen.Emit(OpCodes.Stfld, fieldBuilder);
-			}
-
-			ilGen.Emit(OpCodes.Ret);
-			typeBuilder.CreateType();
 			loweredSymbols.AddType(typeSym, typeBuilder);
 		}
 	}
@@ -291,7 +268,35 @@ namespace PaprikaLang
 
 		private void Gen(ASTTypeDef typeDef, ILGenerator ilGen)
 		{
-			// nothing to do
+			TypeBuilder typeBuilder = loweredSymbols.GetTypeBuilder(typeDef.Symbol);
+
+			Type[] fieldTypes = typeDef.Symbol.Fields.Select(
+				f => loweredSymbols.GetType(f.Type)).ToArray();
+
+			// define a constructor which will initialise each field
+			ConstructorBuilder constructorBuilder = typeBuilder.DefineConstructor(
+				MethodAttributes.Public,
+				CallingConventions.Standard,
+				fieldTypes);
+
+			ILGenerator typeIlGen = constructorBuilder.GetILGenerator();
+
+			for (int i = 0; i < typeDef.Symbol.Fields.Count; ++i)
+			{
+				FieldSymbol fieldSym = typeDef.Symbol.Fields[i];
+				Type fieldType = fieldTypes[i];
+
+				FieldBuilder fieldBuilder = typeBuilder.DefineField(fieldSym.Name, fieldType, FieldAttributes.Public);
+				loweredSymbols.AddFieldMember(fieldSym, fieldBuilder);
+
+				// init field in constructor
+				typeIlGen.Emit(OpCodes.Ldarg_0); // load 'this'
+				typeIlGen.Emit(OpCodes.Ldarg, i + 1);
+				typeIlGen.Emit(OpCodes.Stfld, fieldBuilder);
+			}
+
+			typeIlGen.Emit(OpCodes.Ret);
+			typeBuilder.CreateType();
 		}
 
 		private void Gen(ASTFunctionDef funcDef, ILGenerator ilGen)

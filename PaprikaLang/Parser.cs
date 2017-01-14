@@ -138,8 +138,11 @@ namespace PaprikaLang
 			ASTExpression expr = ParseOperand();
 
 			// resolve member accesses via the dot operator
-			while (lexer.AcceptChar('.'))
+			// but don't confuse it with other dot-like operators!
+			// the pattern is: .(dot)Identifier
+			while (lexer.IsIncomingChar('.') && lexer.LookaheadToken == TokenType.Identifier)
 			{
+				lexer.ExpectChar('.');
 				lexer.Expect(TokenType.Identifier);
 				string dataMember = lexer.AcceptedValue;
 

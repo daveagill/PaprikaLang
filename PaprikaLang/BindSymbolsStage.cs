@@ -281,14 +281,6 @@ namespace PaprikaLang
 			TypeDetail representingType = new TypeDetail(typeDef.Name, TypePrimitive.Structure);
 			typeDef.Symbol = new TypeSymbol(representingType, typeScope);
 
-			foreach (ASTTypeDef.ASTField field in typeDef.Fields)
-			{
-				TypeDetail fieldType = ResolveConcreteType(field.Type);
-				FieldSymbol fieldSym = new FieldSymbol(field.Name, fieldType);
-				typeDef.Symbol.Fields.Add(fieldSym);
-				typeScope.Add(fieldSym);
-			}
-
 			symTab.Add(typeDef.Symbol);
 			symTab.AddType(representingType);
 		}
@@ -332,6 +324,14 @@ namespace PaprikaLang
 
 		private TypeDetail Bind(ASTTypeDef typeDef)
 		{
+			foreach (ASTTypeDef.ASTField field in typeDef.Fields)
+			{
+				TypeDetail fieldType = ResolveConcreteType(field.Type);
+				FieldSymbol fieldSym = new FieldSymbol(field.Name, fieldType);
+				typeDef.Symbol.Fields.Add(fieldSym);
+				typeDef.Symbol.SymbolTable.Add(fieldSym);
+			}
+
 			return null; // type definitions have no type
 		}
 
