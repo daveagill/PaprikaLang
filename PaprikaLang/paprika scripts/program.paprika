@@ -1,15 +1,18 @@
-﻿type MyType
+﻿type Animal
+{
+	name string
+	flavour string
+}
+
+type Person
 {
 	name string
 	age number
-}
-
-func test(t MyType) -> string
-{
-	t.name
+	pet Animal
 }
 
 func Main() -> string
 {
-	test(MyType{"fred",45})
+	let fred Person = Person{"fred",45, Animal{"Mr Woofy", "Dog"}}
+	fred.pet.name
 }

@@ -64,7 +64,7 @@ namespace PaprikaLang
 			{
 				if (s.Length > 0)
 				{
-					s += ", '";
+					s += ", ";
 				}
 				s += Stringify(arg as dynamic);
 			}
@@ -160,7 +160,7 @@ namespace PaprikaLang
 			{
 				if (s.Length > 0)
 				{
-					s += ", '";
+					s += ", ";
 				}
 				s += Stringify(arg as dynamic);
 			}

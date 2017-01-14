@@ -35,29 +35,6 @@ namespace PaprikaLang
 		}
 	}
 
-	public class Emitter
-	{
-		public static void Emit(string assemblyName, string filename, ASTModule module)
-		{
-			AssemblyBuilder assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(
-				new AssemblyName(assemblyName),
-				AssemblyBuilderAccess.Save);
-
-			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName, filename);
-
-			string mainClassName = assemblyName + "_PaprikaMainClass";
-			TypeBuilder typeBuilder = moduleBuilder.DefineType(mainClassName, TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract | TypeAttributes.NotPublic);
-
-			LoweredSymbolTable loweredSymbols =
-				new StructuralSymbolLoweringStage(assemblyBuilder, moduleBuilder, typeBuilder).LowerSymbols(module);
-
-			new ILGenStage(loweredSymbols).EmitIL(module);
-
-			typeBuilder.CreateType();
-			assemblyBuilder.Save(filename);
-		}
-	}
-
 	public class LoweredSymbolTable
 	{
 		private IDictionary<TypeDetail, Type> typeDetailsToType = new Dictionary<TypeDetail, Type>();
@@ -128,6 +105,29 @@ namespace PaprikaLang
 			}
 
 			return DotNetTypeMapper.MapTypeInfo(typeDetail);
+		}
+	}
+
+	public class Emitter
+	{
+		public static void Emit(string assemblyName, string filename, ASTModule module)
+		{
+			AssemblyBuilder assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(
+				new AssemblyName(assemblyName),
+				AssemblyBuilderAccess.Save);
+
+			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName, filename);
+
+			string mainClassName = assemblyName + "_PaprikaMainClass";
+			TypeBuilder typeBuilder = moduleBuilder.DefineType(mainClassName, TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract | TypeAttributes.NotPublic);
+
+			LoweredSymbolTable loweredSymbols =
+				new StructuralSymbolLoweringStage(assemblyBuilder, moduleBuilder, typeBuilder).LowerSymbols(module);
+
+			new ILGenStage(loweredSymbols).EmitIL(module);
+
+			typeBuilder.CreateType();
+			assemblyBuilder.Save(filename);
 		}
 	}
 
@@ -222,13 +222,32 @@ namespace PaprikaLang
 		{
 			TypeBuilder typeBuilder = moduleBuilder.DefineType(typeSym.Name, TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Public);
 
-			foreach (FieldSymbol fieldSym in typeSym.Fields)
+			Type[] fieldTypes = typeSym.Fields.Select(
+				f => loweredSymbols.GetType(f.Type)).ToArray();
+
+			// define a constructor which will initialise each field
+			ConstructorBuilder constructorBuilder = typeBuilder.DefineConstructor(
+				MethodAttributes.Public,
+				CallingConventions.Standard,
+				fieldTypes);
+
+			ILGenerator ilGen = constructorBuilder.GetILGenerator();
+
+			for (int i = 0; i < typeSym.Fields.Count; ++i)
 			{
-				Type fieldType = loweredSymbols.GetType(fieldSym.Type);
+				FieldSymbol fieldSym = typeSym.Fields[i];
+				Type fieldType = fieldTypes[i];
+
 				FieldBuilder fieldBuilder = typeBuilder.DefineField(fieldSym.Name, fieldType, FieldAttributes.Public);
 				loweredSymbols.AddFieldMember(fieldSym, fieldBuilder);
+
+				// init field in constructor
+				ilGen.Emit(OpCodes.Ldarg_0); // load 'this'
+				ilGen.Emit(OpCodes.Ldarg, i+1);
+				ilGen.Emit(OpCodes.Stfld, fieldBuilder);
 			}
 
+			ilGen.Emit(OpCodes.Ret);
 			typeBuilder.CreateType();
 			loweredSymbols.AddType(typeSym, typeBuilder);
 		}
@@ -460,9 +479,15 @@ namespace PaprikaLang
 			ilGen.Emit(OpCodes.Ldfld, field);
 		}
 
-		private void Gen(ASTTypeConstruction memberAccess, ILGenerator ilGen)
+		private void Gen(ASTTypeConstruction typeConstruction, ILGenerator ilGen)
 		{
-			// TODO
+			foreach (var param in typeConstruction.Args)
+			{
+				Gen(param as dynamic, ilGen);
+			}
+
+			Type type = loweredSymbols.GetType(typeConstruction.ReferencedSymbol.Type);
+			ilGen.Emit(OpCodes.Newobj, type.GetConstructors()[0]);
 		}
 
 		private void GenAssignmentToLocal(ASTIfStatement conditionalAssignment, LocalBuilder local, ILGenerator ilGen)
