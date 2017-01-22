@@ -1,13 +1,8 @@
 ﻿func IsFive(x number) -> string
 {
 	if x == 5
-	{
-		"It's five! :D"
-	}
-	else
-	{
-		x .. " is not five! :/"
-	}
+	then "It's five! :D"
+	else x .. " is not five! :/"
 }
 
 func Main() -> string

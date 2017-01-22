@@ -1,9 +1,8 @@
 ﻿func StringJoin(range seq<number>, separator string) -> string
 {
-	let result string = "" then foreach i number in range
-	{
-		result .. (if result == "" { "" } else { separator }) .. i
-	}
+	let result string = "" where foreach i number in range do
+		result .. (if result == "" then "" else separator) .. i
+
 	result
 }
 

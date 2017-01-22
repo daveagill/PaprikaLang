@@ -1,46 +1,31 @@
 ﻿func Floor(n number, i number) -> number
 {
 	if i > n
-	{
-		i-1
-	}
-	else
-	{
-		Floor(n, i+1)
-	}
+	then i-1
+	else Floor(n, i+1)
 }
 
 func InCarpet(x number, y number) -> number
 {
 	if x == 0 or y == 0
-	{
-		1
-	}
+	then 1
 	else
-	{
 		if x % 3 == 1 and y % 3 == 1
-		{
-			0
-		}
-		else
-		{
-			InCarpet(
+		then 0
+		else InCarpet(
 				Floor(x/3, 0),
 				Floor(y/3, 0))
-		}
-	}
 }
 
 func SierpinskiFractal(size number) -> string
 {
-	let n number = 1 then foreach i number in [0 to size] { n * 3 }
+	let n number = 1 where foreach i number in [0 to size] do { n * 3 }
 
-	let img string = "" then foreach y number in [0 to n]
+	let img string = "" where foreach y number in [0 to n] do
 	{
-		let row string = "" then foreach x number in [0 to n]
-		{
-			row .. if InCarpet(x, y) == 1 { "██" } else { "  " }
-		}
+		let row string = "" where foreach x number in [0 to n] do
+			row .. if InCarpet(x, y) == 1 then "██" else "  "
+		
 		img .. row .. "\n"
 	}
 	img

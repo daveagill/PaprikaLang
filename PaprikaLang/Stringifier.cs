@@ -74,11 +74,11 @@ namespace PaprikaLang
 		private static string Stringify(ASTIfStatement ifStatement)
 		{
 			string s = "if " + Stringify(ifStatement.ConditionExpr as dynamic) +
-				" " + Stringify(ifStatement.IfBody);
+				" then " + Stringify(ifStatement.IfBody as dynamic);
 			
 			if (ifStatement.ElseBody != null)
 			{
-				s += " else " + Stringify(ifStatement.ElseBody);
+				s += " else " + Stringify(ifStatement.ElseBody as dynamic);
 			}
 
 			return s;
@@ -95,7 +95,7 @@ namespace PaprikaLang
 			string s = "let " + letDef.Name + " " + Stringify(letDef.Type) + " = " + Stringify(letDef.AssignmentBodies.First() as dynamic);
 			foreach (ASTExpression assignmentBody in letDef.AssignmentBodies.Skip(1))
 			{
-				s += " then " + Stringify(assignmentBody as dynamic);
+				s += " where " + Stringify(assignmentBody as dynamic);
 			}
 			return s;
 		}
@@ -105,7 +105,7 @@ namespace PaprikaLang
 			return "foreach " +
 				foreachAssignment.ElementName + " " + Stringify(foreachAssignment.ElementType) +
 				" in " + Stringify(foreachAssignment.Range as dynamic) +
-				" " + Stringify(foreachAssignment.Body);
+				" do " + Stringify(foreachAssignment.Body as dynamic);
 		}
 
 		private static string Stringify(ASTList list)

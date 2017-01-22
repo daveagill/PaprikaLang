@@ -220,13 +220,11 @@ namespace PaprikaLang
 				throw new Exception("If-condition was of type " + conditionType + " but must be " + TypePrimitive.Boolean);
 			}
 
-			SymbolTable ifScope = new SymbolTable(symTab);
-			TypeDetail ifBodyType = BindScope(ifStatement.IfBody.Body, ifScope);
+			TypeDetail ifBodyType = Bind(ifStatement.IfBody as dynamic );
 
 			if (ifStatement.ElseBody != null)
 			{
-				SymbolTable elseScope = new SymbolTable(symTab);
-				TypeDetail elseBodyType = BindScope(ifStatement.ElseBody.Body, elseScope);
+				TypeDetail elseBodyType = Bind(ifStatement.ElseBody as dynamic);
 
 				if (ifBodyType != elseBodyType)
 				{
@@ -255,7 +253,7 @@ namespace PaprikaLang
 				throw new Exception("Element type of foreach " + elementType + " must match the range type of " + rangeType);
 			}
 
-			return Bind(foreachAssignment.Body);
+			return Bind(foreachAssignment.Body as dynamic);
 		}
 
 		private TypeDetail Bind(ASTList list)

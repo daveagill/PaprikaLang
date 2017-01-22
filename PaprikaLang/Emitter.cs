@@ -461,7 +461,7 @@ namespace PaprikaLang
 			{
 				Label doneLabel = ilGen.DefineLabel();
 				ilGen.Emit(OpCodes.Brfalse, doneLabel);
-				Gen(ifStatement.IfBody, ilGen);
+				Gen(ifStatement.IfBody as dynamic, ilGen);
 				ilGen.MarkLabel(doneLabel);
 			}
 			else // an if-else statement
@@ -469,10 +469,10 @@ namespace PaprikaLang
 				Label doneLabel = ilGen.DefineLabel();
 				Label elseLabel = ilGen.DefineLabel();
 				ilGen.Emit(OpCodes.Brfalse, elseLabel);
-				Gen(ifStatement.IfBody, ilGen);
+				Gen(ifStatement.IfBody as dynamic, ilGen);
 				ilGen.Emit(OpCodes.Br, doneLabel);
 				ilGen.MarkLabel(elseLabel);
-				Gen(ifStatement.ElseBody, ilGen);
+				Gen(ifStatement.ElseBody as dynamic, ilGen);
 				ilGen.MarkLabel(doneLabel);
 			}
 		}
@@ -510,7 +510,7 @@ namespace PaprikaLang
 
 			Label doneLabel = ilGen.DefineLabel();
 			ilGen.Emit(OpCodes.Brfalse, doneLabel);
-			Gen(conditionalAssignment.IfBody, ilGen);
+			Gen(conditionalAssignment.IfBody as dynamic, ilGen);
 			ilGen.Emit(OpCodes.Stloc, local); // conditionally assign to the local
 			ilGen.MarkLabel(doneLabel);
 		}
@@ -547,7 +547,7 @@ namespace PaprikaLang
 				ilGen.Emit(OpCodes.Stloc, elementLocal);
 
 				// emit the body of the loop
-				Gen(foreachAssignment.Body, ilGen);
+				Gen(foreachAssignment.Body as dynamic, ilGen);
 
 				// assign the accumulating local
 				ilGen.Emit(OpCodes.Stloc, local);

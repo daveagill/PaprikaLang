@@ -218,6 +218,15 @@ namespace PaprikaLang
 			return new ASTBlock(nodes);
 		}
 
+		private ASTExpression ParseBlockOrExpression()
+		{
+			if (lexer.IsIncomingChar('{'))
+			{
+				return ParseBlock();
+			}
+			return ParseExpression();
+		}
+
 		private ASTFunctionDef ParseFunctionDef()
 		{
 			lexer.Expect(TokenType.Function);
@@ -269,13 +278,13 @@ namespace PaprikaLang
 			// expect assignment symbol
 			lexer.ExpectChar('=');
 
-			// multiple assignments can take place, separated by the 'then' keyword
+			// multiple assignments can take place, separated by the 'where' keyword
 			IList<ASTExpression> assignmentBodies = new List<ASTExpression>();
 			do
 			{
 				// the body of the assignment can either be a singular expression or a block
 				ASTExpression assignmentBody = null;
-				if (lexer.IsIncomingChar('{')) // blocks work for both first and subsequent assignment bodies
+				if (lexer.IsIncomingChar('{')) // blocks work for all assignment bodies
 				{
 					assignmentBody = ParseBlock();
 				}
@@ -293,7 +302,7 @@ namespace PaprikaLang
 
 				assignmentBodies.Add(assignmentBody);
 			}
-			while (lexer.Accept(TokenType.Then)); // keep going while there is another assignment
+			while (lexer.Accept(TokenType.Where)); // keep going while there is another assignment
 
 			return new ASTLetDef(name, type, assignmentBodies);
 		}
@@ -354,12 +363,14 @@ namespace PaprikaLang
 		{
 			lexer.Expect(TokenType.If);
 			ASTExpression conditionExpr = ParseExpression();
-			ASTBlock ifBody = ParseBlock();
 
-			ASTBlock elseBody = null;
+			lexer.Expect(TokenType.Then);
+			ASTExpression ifBody = ParseBlockOrExpression();
+
+			ASTExpression elseBody = null;
 			if (lexer.Accept(TokenType.Else))
 			{
-				elseBody = ParseBlock();
+				elseBody = ParseBlockOrExpression();
 			}
 
 			return new ASTIfStatement(conditionExpr, ifBody, elseBody);
@@ -381,8 +392,10 @@ namespace PaprikaLang
 			// expect a range to iterate over
 			ASTExpression range = ParseExpression();
 
+			lexer.Expect(TokenType.Do);
+
 			// expect a body
-			ASTBlock body = ParseBlock();
+			ASTExpression body = ParseBlockOrExpression();
 
 			return new ASTForeachAssignment(elementName, elementType, range, body);
 		}

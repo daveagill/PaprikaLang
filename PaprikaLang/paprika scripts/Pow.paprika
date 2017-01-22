@@ -1,6 +1,6 @@
 ﻿func Pow(base number, exponent number) -> number
 {
-	let result number = 1 then foreach i number in [0 to exponent] { result * base }
+	let result number = 1 where foreach i number in [0 to exponent] do { result * base }
 	result
 }
 

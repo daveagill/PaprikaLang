@@ -37,35 +37,33 @@ namespace PaprikaLang
 				return -1;
 			}
 
-			int precedence = 0;
-
 			switch (op)
 			{
 				case BinaryOps.Or:
-					return ++precedence;
+					return 1;
 
 				case BinaryOps.And:
-					return ++precedence;
+					return 2;
 
 				case BinaryOps.Equals:
 				case BinaryOps.NotEquals:
-					return ++precedence;
+					return 3;
 
 				case BinaryOps.GreaterThan:
 				case BinaryOps.LessThan:
-					return ++precedence;
+					return 4;
 
 				case BinaryOps.StringConcat:
-					return ++precedence;
+					return 5;
 					
 				case BinaryOps.Add:
 				case BinaryOps.Subtract:
-					return ++precedence;
+					return 6;
 
 				case BinaryOps.Multiply:
 				case BinaryOps.Divide:
 				case BinaryOps.Modulus:
-					return ++precedence;
+					return 7;
 			}
 
 			throw new Exception("Unhandled operator: " + op);

@@ -1,9 +1,8 @@
 ﻿func CountTo(n number) -> string
 {
-	let result string = "" then foreach i number in [0 to n]
-	{
+	let result string = "" where foreach i number in [0 to n] do
 		result .. i .. ", "
-	}
+	
 	result .. n
 }
 

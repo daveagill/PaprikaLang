@@ -179,10 +179,10 @@ namespace PaprikaLang
 	public class ASTIfStatement : ASTExpression
 	{
 		public ASTExpression ConditionExpr;
-		public ASTBlock IfBody { get; }
-		public ASTBlock ElseBody { get; }
+		public ASTExpression IfBody { get; }
+		public ASTExpression ElseBody { get; }
 
-		public ASTIfStatement(ASTExpression conditionExpr, ASTBlock ifBody, ASTBlock elseBody)
+		public ASTIfStatement(ASTExpression conditionExpr, ASTExpression ifBody, ASTExpression elseBody)
 		{
 			this.ConditionExpr = conditionExpr;
 			this.IfBody = ifBody;
@@ -195,11 +195,11 @@ namespace PaprikaLang
 		public string ElementName { get; }
 		public ASTTypeNameParts ElementType { get; }
 		public ASTExpression Range { get; }
-		public ASTBlock Body { get; }
+		public ASTExpression Body { get; }
 
 		public LocalSymbol ReferencedSymbol { get; set; }
 
-		public ASTForeachAssignment(string elementName, ASTTypeNameParts elementType, ASTExpression range, ASTBlock body)
+		public ASTForeachAssignment(string elementName, ASTTypeNameParts elementType, ASTExpression range, ASTExpression body)
 		{
 			this.ElementName = elementName;
 			this.ElementType = elementType;

@@ -15,7 +15,7 @@ type linkedlist
 // a language that isn't supposed to support null :D
 func NullElem() -> elem
 {
-	if 0 > 1 { NullElem() }
+	if 0 > 1 then NullElem()
 }
 
 func Append(lst linkedlist, data string) -> linkedlist
@@ -31,7 +31,7 @@ func EmptyList() -> linkedlist
 
 func ElemChainToString(e elem) -> string
 {
-	if e.id == 0 { "" } else { ElemChainToString(e.prev) .. ", " } .. e.data
+	(if e.id == 0 then "" else ElemChainToString(e.prev) .. ", ") .. e.data
 }
 
 func ToString(lst linkedlist) -> string
@@ -42,10 +42,10 @@ func ToString(lst linkedlist) -> string
 func Main() -> string
 {
 	let mylist linkedlist = EmptyList()
-		then Append(mylist, "first")
-		then Append(mylist, "second")
-		then Append(mylist, "third")
-		then Append(mylist, "fourth")
+		where Append(mylist, "first")
+		where Append(mylist, "second")
+		where Append(mylist, "third")
+		where Append(mylist, "fourth")
 
 	ToString(mylist)
 }
