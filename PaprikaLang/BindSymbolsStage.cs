@@ -33,6 +33,11 @@ namespace PaprikaLang
 			return TypeDetail.String;
 		}
 
+		private TypeDetail Bind(ASTBoolean booleanLiteral)
+		{
+			return TypeDetail.Boolean;
+		}
+
 		private TypeDetail Bind(ASTNamedValue namedValue)
 		{
 			namedValue.ReferencedSymbol = symTab.ResolveSymbol(namedValue.Name);

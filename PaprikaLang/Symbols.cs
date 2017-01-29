@@ -22,7 +22,7 @@ namespace PaprikaLang
 	{
 		public static readonly TypeDetail Number = new TypeDetail("number", TypePrimitive.Number);
 		public static readonly TypeDetail String = new TypeDetail("string", TypePrimitive.String);
-		public static readonly TypeDetail Boolean = new TypeDetail("boolean", TypePrimitive.Boolean);
+		public static readonly TypeDetail Boolean = new TypeDetail("bool", TypePrimitive.Boolean);
 		public static readonly TypeDetail UnboundList = new TypeDetail("seq", TypePrimitive.List, 1);
 		public static readonly TypeDetail ListOfNumbers = new TypeDetail(UnboundList, new TypeDetail[] { Number });
 		public static readonly TypeDetail Func = new TypeDetail("func", TypePrimitive.Func);

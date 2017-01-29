@@ -22,6 +22,11 @@ namespace PaprikaLang
 				return typeof(string);
 			}
 
+			if (typeDetail.TypePrimitive == TypePrimitive.Boolean)
+			{
+				return typeof(bool);
+			}
+
 			if (typeDetail.IsBound)
 			{
 				if (typeDetail.GenericType == TypeDetail.UnboundList)
@@ -328,6 +333,11 @@ namespace PaprikaLang
 		private void Gen(ASTString str, ILGenerator ilGen)
 		{
 			ilGen.Emit(OpCodes.Ldstr, str.Value);
+		}
+
+		private void Gen(ASTBoolean booleanLiteral, ILGenerator ilGen)
+		{
+			ilGen.Emit(booleanLiteral.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
 		}
 
 		private void Gen(ASTList list, ILGenerator ilGen)

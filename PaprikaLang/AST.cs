@@ -60,6 +60,16 @@ namespace PaprikaLang
 		}
 	}
 
+	public class ASTBoolean : ASTExpression
+	{
+		public bool Value { get; }
+
+		public ASTBoolean(bool value)
+		{
+			this.Value = value;
+		}
+	}
+
 	public class ASTList : ASTExpression
 	{
 		public ASTExpression From { get; }

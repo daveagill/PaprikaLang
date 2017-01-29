@@ -45,6 +45,11 @@ namespace PaprikaLang
 			return numeric.Value.ToString();
 		}
 
+		private static string Stringify(ASTBoolean booleanLiteral)
+		{
+			return booleanLiteral.Value.ToString();
+		}
+
 		private static string Stringify(ASTNamedValue namedValue)
 		{
 			return namedValue.Name;

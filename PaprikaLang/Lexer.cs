@@ -11,6 +11,8 @@ namespace PaprikaLang
 		Identifier,
 		NumericLiteral,
 		StringLiteral,
+		BooleanTrueLiteral,
+		BooleanFalseLiteral,
 
 		// keywords
 		Type,
@@ -217,6 +219,14 @@ namespace PaprikaLang
 			TokenType type = TokenType.Identifier;
 			switch (value)
 			{
+				case "true":
+					type = TokenType.BooleanTrueLiteral;
+					break;
+
+				case "false":
+					type = TokenType.BooleanFalseLiteral;
+					break;
+					
 				case "type":
 					type = TokenType.Type;
 					break;

@@ -163,6 +163,14 @@ namespace PaprikaLang
 			{
 				return new ASTString(lexer.AcceptedValue);
 			}
+			else if (lexer.Accept(TokenType.BooleanTrueLiteral))
+			{
+				return new ASTBoolean(true);
+			}
+			else if (lexer.Accept(TokenType.BooleanFalseLiteral))
+			{
+				return new ASTBoolean(false);
+			}
 			else if (lexer.IncomingToken == TokenType.Identifier)
 			{
 				return ParseNamedValueOrFunctionCallOrTypeConstruction();
